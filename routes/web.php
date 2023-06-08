@@ -38,7 +38,7 @@ Route::get('/home', [HomeController::class, 'index'])
 
 Route::namespace('Auth')->group(function () {
     Route::get('/login',[LoginController::class,'login'])->name('login');
-    Route::post('/login',[LoginController::class,'processLogin']);
+    Route::post('login',[LoginController::class,'processLogin']);
 });
 
 Route::post('logout', [LoginController::class, 'logout'])

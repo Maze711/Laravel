@@ -8,7 +8,7 @@
 </head>
 
 <body>
-    <div class="container mt-4">
+    <div class="container col-md-4 mt-5">
         @if(session('status'))
         <div class="alert alert-success">
             {{ session('status') }}
@@ -16,7 +16,7 @@
         @endif
         <div class="card">
             <div class="card-header text-center font-weight-bold">
-                <h2>Login Form</h2>
+                <h2>LOGIN FORM</h2>
             </div>
             <div class="card-body">
                 <form name="employee" id="employee" method="post" action="{{url('login')}}">
@@ -42,8 +42,10 @@
                         <div class="alert alert-danger mt-1 mb-1">{{ $message }}</div>
                         @enderror
                     </div><br>
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                    <a class="btn btn-primary" href="{{ route('form') }}">Sign Up</a>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Login</button>
+                        <a class="btn btn-success" href="{{ route('form') }}">Register</a>
+                    </div>
                 </form>
             </div>
         </div>
