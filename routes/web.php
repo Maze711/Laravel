@@ -46,6 +46,10 @@ Route::post('logout', [LoginController::class, 'logout'])
     ->name('logout')
     ->middleware('auth');
 
+
 Route::get('/home', [UserFormController::class, 'index'])->name('home');
+
+Route::get('/add', [UserFormController::class, 'create'])->name('users.add');
+Route::post('/add', [UserFormController::class, 'add'])->name('users.add');
 
 Route::delete('/users/{user}', [UserFormController::class, 'destroy'])->name('users.destroy');

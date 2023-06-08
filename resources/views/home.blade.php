@@ -59,7 +59,7 @@
                                     @endforeach
                                 </tbody>
                             </table>
-                            <a href="#" class="btn btn-success">Add User</a>
+                            <a href="{{route('users.add')}}" class="btn btn-success">Add User</a>
                         </div>
                     </div>
                 </div>
