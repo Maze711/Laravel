@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\UserFormController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\Auth\LoginController;
@@ -37,10 +38,12 @@ Route::get('/home', [HomeController::class, 'index'])
     ->middleware('auth');
 
 Route::namespace('Auth')->group(function () {
-    Route::get('/login',[LoginController::class,'login'])->name('login');
-    Route::post('login',[LoginController::class,'processLogin']);
+    Route::get('/login', [LoginController::class, 'login'])->name('login');
+    Route::post('login', [LoginController::class, 'processLogin']);
 });
 
 Route::post('logout', [LoginController::class, 'logout'])
     ->name('logout')
     ->middleware('auth');
+
+Route::get('/home', [UserFormController::class, 'index'])->name('home');
