@@ -22,7 +22,7 @@ use App\Http\Controllers\HomeController;
 // });
 
 
-// TO-DO LIST Web
+// TO-DO LIST Web (on going)
 Route::get('/tasks', 'App\Http\Controllers\TaskController@index');
 Route::post('/tasks', 'App\Http\Controllers\TaskController@store');
 Route::get('/tasks/{id}/edit', 'App\Http\Controllers\TaskController@edit');
@@ -47,3 +47,5 @@ Route::post('logout', [LoginController::class, 'logout'])
     ->middleware('auth');
 
 Route::get('/home', [UserFormController::class, 'index'])->name('home');
+
+Route::delete('/users/{user}', [UserFormController::class, 'destroy'])->name('users.destroy');

@@ -15,4 +15,12 @@ class UserFormController extends Controller
 
         return view('home', ['users' => $users]);
     }
+
+    public function destroy(User $user)
+    {
+    
+        $user->delete();
+
+        return redirect()->back()->with('Success', 'User Deleted Successfully.');
+    }
 }
