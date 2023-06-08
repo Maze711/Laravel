@@ -8,17 +8,15 @@
 </head>
 
 <body>
-    <div class="container">
+    <div class="container mt-4">
         <div class="row justify-content-center">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header">Dashboard</div>
+                    <div class="card-header h2">Dashboard</div>
                     <div class="card-body">
                         Welcome {{ auth()->user()->name }}, you are logged in!
-                        <div class="container mt-4">
-                            <h1>CRUD Table</h1>
-
-                            <table class="table">
+                        <div class="mt-4">
+                            <table class="table text-center">
                                 <thead>
                                     <tr>
                                         <th>ID</th>

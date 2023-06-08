@@ -27,7 +27,7 @@ class UserFormController extends Controller
     public function add(Request $request)
     {
         $validatedData = $request->validate([
-            'name' => 'required',
+            'name' => 'required|unique:users',
             'email' => 'required|email|unique:users',
             'password' => 'required'
         ]);
