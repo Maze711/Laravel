@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Registraion</title>
+    <title>Login</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
@@ -16,10 +16,10 @@
         @endif
         <div class="card">
             <div class="card-header text-center font-weight-bold">
-                <h2>Register Form</h2>
+                <h2>Login Form</h2>
             </div>
             <div class="card-body">
-                <form name="employee" id="employee" method="post" action="{{url('store-form')}}">
+                <form name="employee" id="employee" method="post" action="{{url('login')}}">
                     {{ csrf_field() }}
                     <div class="form-group">
                         <label for="exampleInputEmail1">Name</label>
@@ -43,7 +43,7 @@
                         @enderror
                     </div><br>
                     <button type="submit" class="btn btn-primary">Submit</button>
-                    <a class="btn btn-primary" href="{{ route('login') }}"> Sign In </a>
+                    <a class="btn btn-primary" href="{{ route('form') }}">Sign Up</a>
                 </form>
             </div>
         </div>

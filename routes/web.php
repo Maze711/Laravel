@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FormController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\HomeController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -25,5 +28,19 @@ Route::get('/tasks/{id}/edit', 'App\Http\Controllers\TaskController@edit');
 Route::put('/tasks/{id}', 'App\Http\Controllers\TaskController@update');
 Route::delete('/tasks/{id}', 'App\Http\Controllers\TaskController@destroy');
 
-Route::get('form', [FormController::class, 'index']);
+// Registration
+Route::get('/form', [FormController::class, 'index'])->name('form');
 Route::post('store-form', [FormController::class, 'store']);
+
+Route::get('/home', [HomeController::class, 'index'])
+    ->name('home')
+    ->middleware('auth');
+
+Route::namespace('Auth')->group(function () {
+    Route::get('/login',[LoginController::class,'login'])->name('login');
+    Route::post('/login',[LoginController::class,'processLogin']);
+});
+
+Route::post('logout', [LoginController::class, 'logout'])
+    ->name('logout')
+    ->middleware('auth');
