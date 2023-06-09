@@ -9,10 +9,10 @@ use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {  
-    public function __construct()
-    {
-        $this->middleware('auth')->except('logout');
-    }
+    // public function __construct()
+    // {
+    //     $this->middleware('auth')->except('logout');
+    // }
     
     public function login()
     {

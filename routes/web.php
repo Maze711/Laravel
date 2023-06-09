@@ -1,7 +1,8 @@
 <?php
 
-use App\Http\Controllers\UserFormController;
 use Illuminate\Support\Facades\Route;
+
+use App\Http\Controllers\UserFormController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\HomeController;

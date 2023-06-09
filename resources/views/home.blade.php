@@ -41,16 +41,16 @@
                                         <td>{{ $user->updated_at }}</td>
                                         <td>
                                             <div class="row">
-                                                    <form class="col-md-6" action="" method="POST">
-                                                        @csrf
-                                                        @method('EDIT')
-                                                        <button type="submit" class="btn btn-primary">EDIT</button>
-                                                    </form>
-                                                    <form class="col-md-6" action="{{route('users.destroy', $user->id)}}" method="POST">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-danger">DELETE</button>
-                                                    </form>
+                                                <form class="col-md-6" action="" method="POST">
+                                                    @csrf
+                                                    @method('EDIT')
+                                                    <button type="submit" class="btn btn-primary">EDIT</button>
+                                                </form>
+                                                <form class="col-md-6" action="{{route('users.destroy', $user->id)}}" method="POST">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger">DELETE</button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
