@@ -28,9 +28,15 @@ class FileController extends Controller
         // Save the spreadsheet as an Excel file
         $writer = new Xlsx($spreadsheet);
         $fileName = 'export.xlsx';
-        $writer->save($fileName);
+        $filePath = app_path('Downloads/' . $fileName);
+
+        $writer->save($filePath);
 
         // Download the file
-        return response()->download($fileName)->deleteFileAfterSend(true);
+        if (file_exists($filePath)) {
+            return response()->download($filePath);
+        } else {
+            abort(404, 'The file could not be found.');
+        }
     }
 }
