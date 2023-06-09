@@ -41,9 +41,8 @@
                                         <td>{{ $user->updated_at }}</td>
                                         <td>
                                             <div class="row">
-                                                <form class="col-md-6" action="" method="POST">
+                                                <form class="col-md-6" action="{{route('users.edit', $user->id)}}" >
                                                     @csrf
-                                                    @method('EDIT')
                                                     <button type="submit" class="btn btn-primary">EDIT</button>
                                                 </form>
                                                 <form class="col-md-6" action="{{route('users.destroy', $user->id)}}" method="POST">
@@ -58,6 +57,7 @@
                                 </tbody>
                             </table>
                             <a href="{{route('users.add')}}" class="btn btn-success">Add User</a>
+                            <a href="{{route('logout')}}" class="btn btn-dark">Logout</a>
                         </div>
                     </div>
                 </div>

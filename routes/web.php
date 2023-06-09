@@ -34,22 +34,23 @@ Route::delete('/tasks/{id}', 'App\Http\Controllers\TaskController@destroy');
 Route::get('/form', [FormController::class, 'index'])->name('form');
 Route::post('store-form', [FormController::class, 'store']);
 
-Route::get('/home', [HomeController::class, 'index'])
-    ->name('home')
-    ->middleware('auth');
+
+
+Route::get('/home', [UserFormController::class, 'index'])->name('home');
 
 Route::namespace('Auth')->group(function () {
     Route::get('/login', [LoginController::class, 'login'])->name('login');
     Route::post('login', [LoginController::class, 'processLogin']);
 });
 
-Route::post('logout', [LoginController::class, 'logout'])
-    ->name('logout')
-    ->middleware('auth');
+Route::get('logout', [LoginController::class, 'logout'])->name('logout');
 
+// Edit User Function
+Route::get('/edit/{id}', [UserFormController::class, 'edit'])->name('users.edit');
+Route::put('/users/{user}', [UserFormController::class, 'update'])->name('users.update');
+// Route::post('/edit', [FormController::class, 'store'])->name('edit.store');
 
-Route::get('/home', [UserFormController::class, 'index'])->name('home');
-
+// Add User Function
 Route::get('/add', [UserFormController::class, 'create'])->name('users.add');
 Route::post('/add', [UserFormController::class, 'add'])->name('users.add');
 

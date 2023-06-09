@@ -14,16 +14,17 @@ class UserFormController extends Controller
         $users = User::select('id', 'name', 'email', 'email_verified_at', 'created_at', 'updated_at')
             ->get();
 
-            // dd($users);
+        // dd($users);
 
         return view('home', compact('users'));
     }
 
+
+    //Add User Function
     public function create()
     {
         return view('add');
     }
-    //Add User Function
     public function add(Request $request)
     {
         $validatedData = $request->validate([
@@ -39,11 +40,32 @@ class UserFormController extends Controller
         $user->save();
 
         $users = User::select('id', 'name', 'email', 'email_verified_at', 'created_at', 'updated_at')
-        ->get();
+            ->get();
         return view('home')->with(['users' => $users, 'Success', 'User created successfully.']);
 
         // return redirect()->back()
     }
+
+    // Edit User Function
+    public function edit($id)
+    {
+        $user = User::find($id);
+
+        return view('edit', compact('user'));
+    }
+
+    public function update(Request $request, User $user)
+    {
+        $validatedData = $request->validate([
+            'name' => 'required',
+            'email' => 'required|email'
+        ]);
+
+        $user->update($validatedData);
+
+        return redirect()->route('home', ['user' => $user->id]);
+    }
+
 
     //Delete User Function
     public function destroy(User $user)

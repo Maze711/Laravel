@@ -8,12 +8,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
-{  
+{
     // public function __construct()
     // {
     //     $this->middleware('auth')->except('logout');
     // }
-    
+
     public function login()
     {
         return view('login');
@@ -32,13 +32,12 @@ class LoginController extends Controller
             return redirect()->route('home');
         }
 
-        return redirect()->back()->with('message','Invalid credentials');
+        return redirect()->back()->with('message', 'Invalid credentials');
     }
     public function logout(Request $request)
     {
-          Auth::logout();
-         $request->session()->invalidate();
-         $request->session()->regenerateToken();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect()->route('login');
     }
