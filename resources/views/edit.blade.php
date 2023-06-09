@@ -30,7 +30,6 @@
                         <div class="alert alert-danger mt-1 mb-1">{{ $message }}</div>
                         @enderror
                     </div><br>
-
                     <button type="submit" class="btn btn-primary">Edit</button>
                     <a href="{{route('home')}}" class="btn btn-danger">Return Home</a>
 

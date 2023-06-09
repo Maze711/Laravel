@@ -15,7 +15,7 @@ class FormController extends Controller
     {
          
         $validatedData = $request->validate([
-          'name' => 'required',
+          'name' => 'required|unique:users',
           'email' => 'required|unique:users|max:255',
           'password' => 'required',
         ]);

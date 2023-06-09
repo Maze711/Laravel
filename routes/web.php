@@ -26,11 +26,11 @@ use App\Http\Controllers\HomeController;
 
 
 // TO-DO LIST Web (on going)
-Route::get('/tasks', 'App\Http\Controllers\TaskController@index');
-Route::post('/tasks', 'App\Http\Controllers\TaskController@store');
-Route::get('/tasks/{id}/edit', 'App\Http\Controllers\TaskController@edit');
-Route::put('/tasks/{id}', 'App\Http\Controllers\TaskController@update');
-Route::delete('/tasks/{id}', 'App\Http\Controllers\TaskController@destroy');
+// Route::get('/tasks', 'App\Http\Controllers\TaskController@index');
+// Route::post('/tasks', 'App\Http\Controllers\TaskController@store');
+// Route::get('/tasks/{id}/edit', 'App\Http\Controllers\TaskController@edit');
+// Route::put('/tasks/{id}', 'App\Http\Controllers\TaskController@update');
+// Route::delete('/tasks/{id}', 'App\Http\Controllers\TaskController@destroy');
 
 // Registration
 Route::get('/form', [FormController::class, 'index'])->name('form');
