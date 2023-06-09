@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserFormController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\ExcelController;
+use App\Http\Controllers\FileController;
 use App\Http\Controllers\HomeController;
 
 /*
@@ -34,8 +36,6 @@ Route::delete('/tasks/{id}', 'App\Http\Controllers\TaskController@destroy');
 Route::get('/form', [FormController::class, 'index'])->name('form');
 Route::post('store-form', [FormController::class, 'store']);
 
-
-
 Route::get('/home', [UserFormController::class, 'index'])->name('home');
 
 Route::namespace('Auth')->group(function () {
@@ -55,3 +55,5 @@ Route::get('/add', [UserFormController::class, 'create'])->name('users.add');
 Route::post('/add', [UserFormController::class, 'add'])->name('users.add');
 
 Route::delete('/users/{user}', [UserFormController::class, 'destroy'])->name('users.destroy');
+
+Route::get('/export', [FileController::class, 'export'])->name('export.excel');

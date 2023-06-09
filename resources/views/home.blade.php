@@ -57,6 +57,7 @@
                                 </tbody>
                             </table>
                             <a href="{{route('users.add')}}" class="btn btn-success">Add User</a>
+                            <a href="{{route('export.excel')}}" class="btn btn-dark">Export</a>
                             <a href="{{route('logout')}}" class="btn btn-dark">Logout</a>
                         </div>
                     </div>
