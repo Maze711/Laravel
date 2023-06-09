@@ -27,7 +27,7 @@ class FileController extends Controller
 
         // Save the spreadsheet as an Excel file
         $writer = new Xlsx($spreadsheet);
-        $fileName = 'export.xlsx';
+        $fileName = 'Accounts.xlsx';
         $filePath = app_path('Downloads/' . $fileName);
 
         $writer->save($filePath);
