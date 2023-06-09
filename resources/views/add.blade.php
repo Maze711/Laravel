@@ -10,6 +10,7 @@
 <body>
     <div class="container mt-4">
         <div class="card">
+            <div class="card-header h2">Add User</div>
             <div class="card-body">
                 <form action="{{ route('users.add') }}" method="POST">
                     @csrf
@@ -39,6 +40,8 @@
                     </div><br>
 
                     <button type="submit" class="btn btn-primary">Add User</button>
+                    <a href="{{route('home')}}" class="btn btn-danger">Return Home</a>
+
                 </form>
             </div>
         </div>
