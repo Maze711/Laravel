@@ -13,12 +13,12 @@ class FileController extends Controller
 {
     public function export()
     {
-        $data = User::select('id', 'name', 'email', 'email_verified_at', 'password', 'remember_token', 'created_at', 'updated_at')->get();
+        $data = User::select('id', 'name', 'email', 'email_verified_at', 'created_at', 'updated_at')->get();
         $spreadsheet = new Spreadsheet();
 
         // Add data to the spreadsheet
         $sheet = $spreadsheet->getActiveSheet();
-        $headers = ['id', 'name', 'email', 'email_verified_at', 'password', 'remember_token', 'created_at', 'updated_at'];
+        $headers = ['id', 'name', 'email', 'email_verified_at', 'created_at', 'updated_at'];
         $sheet->fromArray($headers, null, 'A1');
 
         // Insert data from the database
