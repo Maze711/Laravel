@@ -63,6 +63,7 @@
                             </table>
                             <a href="{{route('users.add')}}" class="btn btn-success">Add User</a>
                             <a href="{{route('export.excel')}}" class="btn btn-warning">Export</a>
+                            <a href="{{route('view')}}" class="btn btn-secondary">Import</a>
                             <a href="{{route('logout')}}" class="btn btn-dark">Logout</a>
                         </div>
                     </div>

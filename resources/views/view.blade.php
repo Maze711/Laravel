@@ -50,6 +50,7 @@
                                 <div class="row justify-content-between">
                                     <div class="col-md-6">
                                         <a href="{{ route('users.add') }}" class="btn btn-success">Add User</a>
+                                        <a href="{{route('home')}}" class="btn btn-secondary">Export</a>
                                         <a href="{{ route('logout') }}" class="btn btn-dark">Logout</a>
                                     </div>
                                     <div class="col-md-6">
@@ -63,7 +64,6 @@
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
