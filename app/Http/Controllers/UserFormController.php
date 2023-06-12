@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Validator;
 
 class UserFormController extends Controller
 {
+    // Retrieve User Function
     public function index()
     {
         $users = User::select('id', 'name', 'email', 'email_verified_at', 'created_at', 'updated_at')
@@ -71,6 +72,7 @@ class UserFormController extends Controller
         $user->email = $request->input('email');
         $user->password = $request->input('password');
         $user->save();
+        // retrieve data from database
         $id = $user->id;
         $created = $user->created_at;
         $updated = $user->updated_at;
@@ -94,6 +96,8 @@ class UserFormController extends Controller
 
         return redirect()->route('home')->with('success', 'User created successfully.');
     }
+    // Finish Add User Function
+
 
     // Edit User Function
     public function edit($id)
@@ -114,7 +118,7 @@ class UserFormController extends Controller
 
         return redirect()->route('home')->with('success', 'User edit successfully.');
     }
-
+    //Finish Edit User Function
 
     //Delete User Function
     public function destroy(User $user)
