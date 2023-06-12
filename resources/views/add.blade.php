@@ -12,9 +12,13 @@
         <div class="card">
             <div class="card-header h2">Add User</div>
             <div class="card-body">
+                @if(session('error'))
+                <div class="alert alert-danger">
+                    {{ session('error') }}
+                </div>
+                @endif
                 <form action="{{ route('users.add') }}" method="POST">
                     @csrf
-
                     <div class="form-group">
                         <label for="name">Name</label>
                         <input type="text" name="name" id="name" class="@error('name') is-invalid @enderror form-control">

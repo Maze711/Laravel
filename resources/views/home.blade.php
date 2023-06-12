@@ -14,6 +14,11 @@
                 <div class="card">
                     <div class="card-header h2">Dashboard</div>
                     <div class="card-body">
+                        @if(session('success'))
+                        <div class="alert alert-success">
+                            {{ session('success') }}
+                        </div>
+                        @endif
                         Welcome {{ auth()->user()->name }}, you are logged in!
                         <div class="mt-4">
                             <table class="table text-center">
@@ -41,7 +46,7 @@
                                         <td>{{ $user->updated_at }}</td>
                                         <td>
                                             <div class="row">
-                                                <form class="col-md-6" action="{{route('users.edit', $user->id)}}" >
+                                                <form class="col-md-6" action="{{route('users.edit', $user->id)}}">
                                                     @csrf
                                                     <button type="submit" class="btn btn-primary">EDIT</button>
                                                 </form>
