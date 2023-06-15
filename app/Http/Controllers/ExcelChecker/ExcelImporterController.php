@@ -4,17 +4,15 @@ namespace App\Http\Controllers\ExcelChecker;
 
 use App\Http\Controllers\Controller;
 use App\Models\Catalog;
-use App\Models\User;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ExcelImporterController extends Controller
 {
-
     public function index(Request $request)
     {
-        $rows = Catalog::get()->toArray();
+        $rows = Catalog::paginate(10);
         // dd($rows);
         if (empty($rows)) {
             return view('view',  ['empty' => 'The Database is empty.']);
@@ -134,22 +132,27 @@ class ExcelImporterController extends Controller
             'created_at',
             'updated_at'
         ];
+        // $columnNames = Schema::getColumnListing('Catalog');
+        // dd($columnNames);
 
         foreach ($rows as $row) {
-            $model = new Catalog();
+            $primaryKey = ['brand', 'mspn'];
 
-            for ($i = 0; $i < count($columnNames); $i++) {
-                $columnValue = $row[$i];
-
-                $columnValue = ($columnValue === null) ? ' ' : $columnValue;
-
-                $columnName = $columnNames[$i];
-                $model->{$columnName} = $columnValue;
+            foreach ($columnNames as $index => $columnName) {
+                $columnValue = $row[$index] ?? ' ';
+                $modelData[$columnName] = $columnValue;
             }
-            $model->save();
+            // Catalog::upsert($columnNames, $primaryKey, [$primaryKey => DB::raw($modelData)]);
+            $existingRecord = Catalog::where(array_combine($primaryKey, array_intersect_key($modelData, array_flip($primaryKey))))->first();
+            // Update the existing record
+            if ($existingRecord) {
+                $existingRecord->update($modelData);
+            } else {
+                // Create a new record
+                Catalog::create($modelData);
+            }
         }
         // dd($rows);
-
         return redirect()->back()->with(['rows' => $rows]);
     }
 }

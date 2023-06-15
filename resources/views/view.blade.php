@@ -21,38 +21,44 @@
                     <div class="card-body">
                         <div class="container mt-4">
                             <div class="row justify-content-between">
-                                <div class="col-md-6">
-                                    <form action="{{ route('import') }}" method="POST" enctype="multipart/form-data">
-                                        @csrf
-                                        <div class="input-group">
-                                            <input class="form-control" type="file" name="excel_file" accept=".csv,.xls,.xlsx">
-                                            <button type="submit" class="btn btn-warning">Upload</button>
-                                        </div>
-                                    </form>
-                                </div>
-                                <div class="col-md-6">
-                                    <a href="{{ route('logout') }}" class="btn btn-dark">Logout</a>
-                                </div>
+                                <form action="{{ route('import') }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    <div class="input-group">
+                                        <input class="form-control" type="file" name="excel_file" accept=".csv,.xls,.xlsx">
+                                        <button type="submit" class="btn btn-warning">Upload</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                         @if(isset($empty))
-                        <p>{{ $empty }}</p>
+                        <p class="text-center fs-3 mt-4">{{ $empty }}</p>
                         @else
+                        <div>
+                            @if ($rows->previousPageUrl())
+                            <a href="{{ $rows->previousPageUrl() }}" class="btn btn-primary">Previous Page</a>
+                            @endif
+
+                            @if ($rows->hasMorePages())
+                            <a href="{{ $rows->nextPageUrl() }}" class="btn btn-primary">Next Page</a>
+                            @endif
+                        </div>
                         <div class="table-responsive mt-4">
-                            <table class="table text-center">
+                            <table class="table table-bordered text-center">
                                 <thead>
                                     <tr>
-                                        <!-- <th>ID</th>
-                                        <th>Uniq_ID</th>
-                                        <th>Category</th>
-                                        <th>Sub_Category</th>
-                                        <th>Discontinued</th>
-                                        <th>Legacy_Brand</th>
-                                        <th>Legacy_Brand</th>
-                                        <th>MSPN</th>
-                                        <th>External_ID</th>
-                                        <th>Model</th>
-                                        <th>Manufacturer</th>
+                                        <th>id</th>
+                                        <th>unq_id</th>
+                                        <th>category</th>
+                                        <th>sub_category</th>
+                                        <th>discontinued</th>
+                                        <th>legacy_brand</th>
+                                        <th>brand</th>
+                                        <th>mspn</th>
+                                        <th>external_id</th>
+                                        <th>external_id_type</th>
+                                        <th>brand_id</th>
+                                        <th>model</th>
+                                        <th>manufacturer</th>
                                         <th>lt_p</th>
                                         <th>size_dimensions</th>
                                         <th>full_size</th>
@@ -81,6 +87,7 @@
                                         <th>length_unit_id</th>
                                         <th>width_package</th>
                                         <th>width_unit_id</th>
+                                        <th>height_package</th>
                                         <th>height_unit_id</th>
                                         <th>weight_package</th>
                                         <th>weight_unit_id</th>
@@ -132,10 +139,9 @@
                                         <th>bolt_pattern_1</th>
                                         <th>bolt_circle_diameter_1</th>
                                         <th>bolt_pattern_2</th>
-                                        <th>bolt_circle_diameter_1</th>
                                         <th>bolt_circle_diameter_2</th>
                                         <th>created_at</th>
-                                        <th>updated_at</th> -->
+                                        <th>updated_at</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -180,6 +186,63 @@
                                         <td>{{ $catalog['weight_tire_unit_id'] }}</td>
                                         <td>{{ $catalog['length_package'] }}</td>
                                         <td>{{ $catalog['length_unit_id'] }}</td>
+                                        <td>{{ $catalog['width_package'] }}</td>
+                                        <td>{{ $catalog['width_unit_id'] }}</td>
+                                        <td>{{ $catalog['height_package'] }}</td>
+                                        <td>{{ $catalog['height_unit_id'] }}</td>
+                                        <td>{{ $catalog['weight_package'] }}</td>
+                                        <td>{{ $catalog['weight_unit_id'] }}</td>
+                                        <td>{{ $catalog['wheel_finish'] }}</td>
+                                        <td>{{ $catalog['simple_finish'] }}</td>
+                                        <td>{{ $catalog['side_wall_style'] }}</td>
+                                        <td>{{ $catalog['load_index_1'] }}</td>
+                                        <td>{{ $catalog['load_index_2'] }}</td>
+                                        <td>{{ $catalog['speed_rating'] }}</td>
+                                        <td>{{ $catalog['load_range'] }}</td>
+                                        <td>{{ $catalog['load_rating'] }}</td>
+                                        <td>{{ $catalog['back_spacing'] }}</td>
+                                        <td>{{ $catalog['offset'] }}</td>
+                                        <td>{{ $catalog['center_bore'] }}</td>
+                                        <td>{{ $catalog['ply'] }}</td>
+                                        <td>{{ $catalog['tread_depth'] }}</td>
+                                        <td>{{ $catalog['tread_depth_unit_id'] }}</td>
+                                        <td>{{ $catalog['rim_width'] }}</td>
+                                        <td>{{ $catalog['rim_width_unit_id'] }}</td>
+                                        <td>{{ $catalog['max_rim_width'] }}</td>
+                                        <td>{{ $catalog['max_rim_width_unit_id'] }}</td>
+                                        <td>{{ $catalog['min_rim_width'] }}</td>
+                                        <td>{{ $catalog['min_rim_width_unit_id'] }}</td>
+                                        <td>{{ $catalog['utqg'] }}</td>
+                                        <td>{{ $catalog['tread_wear'] }}</td>
+                                        <td>{{ $catalog['traction'] }}</td>
+                                        <td>{{ $catalog['warranty_type'] }}</td>
+                                        <td>{{ $catalog['warranty_in_miles'] }}</td>
+                                        <td>{{ $catalog['max_psi'] }}</td>
+                                        <td>{{ $catalog['max_load_lb'] }}</td>
+                                        <td>{{ $catalog['image_url_full'] }}</td>
+                                        <td>{{ $catalog['image_url_quarter'] }}</td>
+                                        <td>{{ $catalog['image_side'] }}</td>
+                                        <td>{{ $catalog['image_url_tread'] }}</td>
+                                        <td>{{ $catalog['image_kit_1'] }}</td>
+                                        <td>{{ $catalog['image_kit_2'] }}</td>
+                                        <td>{{ $catalog['season'] }}</td>
+                                        <td>{{ $catalog['tire_type_performance'] }}</td>
+                                        <td>{{ $catalog['car_type'] }}</td>
+                                        <td>{{ $catalog['country'] }}</td>
+                                        <td>{{ $catalog['quality_tier'] }}</td>
+                                        <td>{{ $catalog['construction'] }}</td>
+                                        <td>{{ $catalog['source'] }}</td>
+                                        <td>{{ $catalog['oem_fitments'] }}</td>
+                                        <td>{{ $catalog['status'] }}</td>
+                                        <td>{{ $catalog['msct'] }}</td>
+                                        <td>{{ $catalog['wheel_diameter'] }}</td>
+                                        <td>{{ $catalog['wheel_width'] }}</td>
+                                        <td>{{ $catalog['bolt_pattern_1'] }}</td>
+                                        <td>{{ $catalog['bolt_circle_diameter_1'] }}</td>
+                                        <td>{{ $catalog['bolt_pattern_2'] }}</td>
+                                        <td>{{ $catalog['bolt_circle_diameter_2'] }}</td>
+                                        <td>{{ $catalog['created_at'] }}</td>
+                                        <td>{{ $catalog['updated_at'] }}</td>
                                     </tr>
                                     @endforeach
                                     @endif
