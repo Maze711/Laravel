@@ -31,24 +31,34 @@ class ExcelImporterController extends Controller
 
         $spreadsheet = IOFactory::load($filePath);
         $worksheet = $spreadsheet->getActiveSheet();
-        
+
 
         $rows = $worksheet->toArray();
         $worksheet = $rows[0];
         $dataRows = array_slice($rows, 1);
-        $collection = Collection::make($dataRows);
+        $collection = collect($dataRows);
 
-        $results = $collection->map(function ($row) use ($worksheet) {
+        $result = $collection->map(function ($row) use ($worksheet) {
             return array_combine($worksheet, $row);
         });
 
-        foreach ($results as $row) {
-            $primaryKey = ['brand' => $row['brand'], 'mspn' => $row['mspn']];
-            
-            Catalog::updateOrCreate($primaryKey, $row);
-          
+        $chunks = $result->chunk(10);
+        // $chunk = $results->chunk(10);
+        // dd($chunk);
+
+        // dd($chunks);
+
+        foreach ($chunks as $chunk) {
+            $chunk->map(function ($row) use ($worksheet) {
+                return array_combine($worksheet, $row);
+            })->each(function ($row) {
+                $primaryKey = ['brand' => $row['brand'], 'mspn' => $row['mspn']];
+                Catalog::updateOrCreate($primaryKey, $row);
+            });
+        // dd($chunk);
+
         }
-        
+
         return redirect()->back()->with(['rows' => $rows]);
     }
 }
