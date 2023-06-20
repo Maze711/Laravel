@@ -66,7 +66,7 @@ class ExcelImporterController extends Controller
                     Catalog::updateOrCreate($primaryKey, $row);
                 });
             }
-            return redirect()->back()->with(['match' => 'Excel imported successfulfy', 'rows' => $rows]);
+            return redirect()->back()->with(['match' => 'Excel imported successfully', 'rows' => $rows]);
         } else {
             return redirect()->back()->with(['error' => 'Excel is not match from database columns']);
         }
