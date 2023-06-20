@@ -26,39 +26,49 @@ class ExcelImporterController extends Controller
         $request->validate([
             'excel_file' => 'required|mimes:csv,xls,xlsx'
         ]);
+
         $file = $request->file('excel_file');
         $filePath = $file->getPathname();
 
         $spreadsheet = IOFactory::load($filePath);
         $worksheet = $spreadsheet->getActiveSheet();
 
-
         $rows = $worksheet->toArray();
         $worksheet = $rows[0];
         $dataRows = array_slice($rows, 1);
-        $collection = collect($dataRows);
+        $collection = collect($worksheet);
+        $dataIndexNames = $collection->values()->toArray();
+        $dataIndexNamesString = implode(', ', $dataIndexNames);
 
-        $result = $collection->map(function ($row) use ($worksheet) {
-            return array_combine($worksheet, $row);
-        });
 
-        $chunks = $result->chunk(10);
-        // $chunk = $results->chunk(10);
-        // dd($chunk);
+        $databaseColumnNames = Catalog::find(1)->toArray();
+        $indexNames = array_keys($databaseColumnNames);
+        $indexNamesString = implode(', ', $indexNames);
+        // dd($indexNamesString);
 
-        // dd($chunks);
+        $areColumnsEqual = ($dataIndexNamesString === $indexNamesString);
+        // dd($areColumnsEqual);
 
-        foreach ($chunks as $chunk) {
-            $chunk->map(function ($row) use ($worksheet) {
+        if ($areColumnsEqual) {
+            echo "The column from the Excel file is the same as the column in the database.";
+            $collection = collect($dataRows);
+            $results = $collection->map(function ($row) use ($worksheet) {
                 return array_combine($worksheet, $row);
-            })->each(function ($row) {
-                $primaryKey = ['brand' => $row['brand'], 'mspn' => $row['mspn']];
-                Catalog::updateOrCreate($primaryKey, $row);
             });
-        // dd($chunk);
 
+            $chunks = $results->chunk(10);
+
+            foreach ($chunks as $chunk) {
+                $chunk->map(function ($row) use ($dataIndexNames) {
+                    return array_combine($dataIndexNames, $row);
+                })->each(function ($row) {
+                    $primaryKey = ['brand' => $row['brand'], 'mspn' => $row['mspn']];
+                    Catalog::updateOrCreate($primaryKey, $row);
+                });
+            }
+            return redirect()->back()->with(['match' => 'Excel imported successfulfy', 'rows' => $rows]);
+        } else {
+            return redirect()->back()->with(['error' => 'Excel is not match from database columns']);
         }
-
-        return redirect()->back()->with(['rows' => $rows]);
     }
 }
