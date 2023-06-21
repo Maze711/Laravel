@@ -20,21 +20,15 @@
                         </div>
                         @endif
                         <div class="card">
-                            <!-- <div class="container mt-4">
-                                <div class="input-group">
-                                    <label class="input-group-text bg-white" for="search"><i class="fa fa-search"></i></label>
-                                    <input type="text" class="form-control rounded-right" id="search" placeholder="Search">
-                                </div>
-                            </div> -->
                             <div class="card-body">
                                 <div class="container mt-2">
-                                    <form action="{{ route('import') }}" method="POST" enctype="multipart/form-data">
+                                    <form method="POST" id="myForm" action="{{ route('import')}}" enctype="multipart/form-data">
                                         @csrf
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div class="h2">CATALOG</div>
                                             <div class="input-group d-grid gap-2 d-md-flex justify-content-md-end">
-                                                <input class="" type="file" name="excel_file" accept=".csv,.xls,.xlsx">
-                                                <button type="submit" class="rounded-pill p-2 fs-6 btn btn-secondary" style="width: 210px;"><i class="fa-solid fa-file-arrow-up"></i> UPLOAD A NEW FILE</button>
+                                                <input class="" id="file_input" style="display:none" type="file" name="excel_file" accept=".csv,.xls,.xlsx">
+                                                <button type="button" onclick="selectFile()" class="rounded-pill p-2 fs-6 btn btn-secondary" style="width: 210px;"><i class="fa-solid fa-file-arrow-up"></i> UPLOAD A NEW FILE</button>
                                             </div>
                                         </div>
                                     </form>
@@ -266,4 +260,12 @@
         </div>
     </div>
 </div>
+<script>
+    function selectFile() {
+        document.getElementById('file_input').click();
+    }
+    document.getElementById('file_input').addEventListener('change', function() {
+                document.getElementById('myForm').submit();
+    });
+</script>
 @endsection

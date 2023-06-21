@@ -50,7 +50,6 @@ class ExcelImporterController extends Controller
         // dd($areColumnsEqual);
 
         if ($areColumnsEqual) {
-            echo "The column from the Excel file is the same as the column in the database.";
             $collection = collect($dataRows);
             $results = $collection->map(function ($row) use ($worksheet) {
                 return array_combine($worksheet, $row);
