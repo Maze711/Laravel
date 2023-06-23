@@ -48,16 +48,17 @@
                                 <div class="card-body">
                                     <div class="container mt-2">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <div class="h2">CATALOG</div>
+                                            <div class="h2 w-50">Upload Catalog</div>
                                             <div class="input-group d-grid gap-2 d-md-flex justify-content-md-end">
                                                 <button class="rounded-pill p-2 fs-6 btn btn-secondary"
-                                                    style="width: 180px;" data-toggle="modal" data-target="#filterModal"><i
+                                                    style="width: 170px;" data-toggle="modal" data-target="#filterModal"><i
                                                         class="fa fa-filter" aria-hidden="true"></i> FILTER</button>
                                                 <form action="{{ route('catalog.export') }}" method="post">
                                                     @csrf
                                                     <input type="hidden" name="hidden_columns[]" id="hiddenColumnsInput">
                                                     <button type="submit" class="rounded-pill p-2 fs-6 btn btn-secondary"
-                                                    style="width: 190px;"><i class="fa-solid fa-file-arrow-down"></i> Download
+                                                        style="width: 190px;"><i class="fa-solid fa-file-arrow-down"></i>
+                                                        Download
                                                         Template</button>
                                                 </form>
                                                 <form method="POST" id="myForm" action="{{ route('import') }}"
@@ -104,6 +105,12 @@
                                                         class="fas fa-arrow-left"></i> Previous Page</a>
                                             @endif
 
+                                            <button class="rounded-pill fs-6 btn btn-secondary" type="button"
+                                                id="pageDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                                                style="width: 100px;">
+                                                Page {{ $rows->currentPage() }}
+                                            </button>
+
                                             @if ($rows->hasMorePages())
                                                 <a href="{{ $rows->nextPageUrl() }}"
                                                     class="rounded-pill fs-6 btn btn-secondary" style="width: 150px;">Next
@@ -124,6 +131,7 @@
         function selectFile() {
             document.getElementById('file_input').click();
         }
+
         document.getElementById('file_input').addEventListener('change', function() {
             document.getElementById('myForm').submit();
         });
@@ -131,37 +139,48 @@
         $(document).ready(function() {
             // Update hidden column input when checkboxes are toggled
             $('.column-toggle').change(function() {
-                updateHiddenColumns();
+                hideColumns();
             });
 
             // Filter columns based on search input
             $('#columnSearch').keyup(function() {
-                var searchValue = $(this).val().toLowerCase();
-                $('.column-check').each(function() {
-                    var columnLabel = $(this).find('label').text().toLowerCase();
-                    if (columnLabel.indexOf(searchValue) === -1) {
-                        $(this).hide();
-                    } else {
-                        $(this).show();
-                    }
-                });
+                filterColumns();
             });
 
             // Update hidden column input on modal close
             $('#filterModal').on('hidden.bs.modal', function() {
-                updateHiddenColumns();
+                hideColumns();
             });
 
-            // Function to update hidden columns input
-            function updateHiddenColumns() {
-                var hiddenColumns = [];
-                $('.column-toggle').each(function() {
-                    if (!$(this).is(':checked')) {
-                        hiddenColumns.push($(this).val());
+            // Function to hide columns
+            function hideColumns() {
+                $('.table th, .table td').each(function() {
+                    var columnText = $(this).text().trim().toLowerCase();
+                    var isHidden = $('.column-toggle[value="' + columnText + '"]').is(':checked');
+                    $(this).toggle(!isHidden);
+                    $('td:nth-child(' + ($(this).index() + 1) + ')').toggle(!isHidden);
+                });
+            }
+
+            // Function to filter columns based on search input
+            function filterColumns() {
+                var searchValue = $('#columnSearch').val().trim().toLowerCase();
+                $('.table th').each(function() {
+                    var columnText = $(this).text().trim().toLowerCase();
+                    var isHidden = $('.column-toggle[value="' + columnText + '"]').is(':checked');
+                    if (searchValue === '' || columnText.includes(searchValue)) {
+                        $(this).toggle(!isHidden);
+                        $('td:nth-child(' + ($(this).index() + 1) + ')').toggle(!isHidden);
+                    } else {
+                        $(this).hide();
+                        $('td:nth-child(' + ($(this).index() + 1) + ')').hide();
                     }
                 });
-                $('#hiddenColumnsInput').val(hiddenColumns);
             }
+
+            // Initialize column visibility on page load
+            hideColumns();
         });
     </script>
+
 @endsection
