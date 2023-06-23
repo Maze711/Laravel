@@ -4,10 +4,12 @@ namespace App\Http\Controllers\ExcelChecker;
 
 use App\Http\Controllers\Controller;
 use App\Models\Catalog;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use League\CommonMark\Extension\Table\Table;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ExcelImporterController extends Controller
 {
@@ -18,7 +20,9 @@ class ExcelImporterController extends Controller
         if (empty($rows)) {
             return view('view',  ['empty' => 'The Database is empty.']);
         } else {
-            return view('view', ['rows' => $rows]);
+            $databaseColumnNames = Schema::getColumnListing('catalogs');
+
+            return view('view', ['rows' => $rows, 'columns' => $databaseColumnNames]);
         }
     }
     public function Import(Request $request)
@@ -39,11 +43,12 @@ class ExcelImporterController extends Controller
         $collection = collect($worksheet);
         $dataIndexNames = $collection->values()->toArray();
         $dataIndexNamesString = implode(', ', $dataIndexNames);
+        // dd($dataIndexNamesString);
 
 
-        $databaseColumnNames = Catalog::find(1)->toArray();
-        $indexNames = array_keys($databaseColumnNames);
-        $indexNamesString = implode(', ', $indexNames);
+        $databaseColumnNames = Schema::getColumnListing('catalogs');
+        array_shift($databaseColumnNames); // Remove the first element from the array
+        $indexNamesString = implode(', ', $databaseColumnNames);
         // dd($indexNamesString);
 
         $areColumnsEqual = ($dataIndexNamesString === $indexNamesString);
@@ -69,5 +74,37 @@ class ExcelImporterController extends Controller
         } else {
             return redirect()->back()->with(['error' => 'Excel is not match from database columns']);
         }
+    }
+    public function export(Request $request)
+    {
+        $hiddenColumns = $request->input('hidden_columns', []);
+
+        $table = new Catalog();
+        $visibleColumns = array_diff($table->getFillable(), $hiddenColumns);
+
+        $tableData = Catalog::select($visibleColumns)->get();
+
+        // Create a new Spreadsheet object
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Set the column headings
+        $columnHeadings = array_keys($tableData->first()->toArray());
+        $sheet->fromArray($columnHeadings, null, 'A1');
+
+        // Set the table data
+        $tableRows = $tableData->map(function ($row) use ($visibleColumns) {
+            return collect($row->toArray())->only($visibleColumns)->values()->all();
+        })->toArray();
+        $sheet->fromArray($tableRows, null, 'A2');
+
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'table_export.xlsx';
+
+        // Save the spreadsheet to a file
+        $writer->save($filename);
+
+        // Download the spreadsheet
+        return response()->download($filename)->deleteFileAfterSend(true);
     }
 }
