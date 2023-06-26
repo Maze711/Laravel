@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\ExcelChecker;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ExcelQueue;
 use App\Models\Catalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -34,46 +35,7 @@ class ExcelImporterController extends Controller
         $file = $request->file('excel_file');
         $filePath = $file->getPathname();
 
-        $spreadsheet = IOFactory::load($filePath);
-        $worksheet = $spreadsheet->getActiveSheet();
-
-        $rows = $worksheet->toArray();
-        $worksheet = $rows[0];
-        $dataRows = array_slice($rows, 1);
-        $collection = collect($worksheet);
-        $dataIndexNames = $collection->values()->toArray();
-        $dataIndexNamesString = implode(', ', $dataIndexNames);
-        // dd($dataIndexNamesString);
-
-
-        $databaseColumnNames = Schema::getColumnListing('catalogs');
-        array_shift($databaseColumnNames); // Remove the first element from the array
-        $indexNamesString = implode(', ', $databaseColumnNames);
-        // dd($indexNamesString);
-
-        $areColumnsEqual = ($dataIndexNamesString === $indexNamesString);
-        // dd($areColumnsEqual);
-
-        if ($areColumnsEqual) {
-            $collection = collect($dataRows);
-            $results = $collection->map(function ($row) use ($worksheet) {
-                return array_combine($worksheet, $row);
-            });
-
-            $chunks = $results->chunk(10);
-
-            foreach ($chunks as $chunk) {
-                $chunk->map(function ($row) use ($dataIndexNames) {
-                    return array_combine($dataIndexNames, $row);
-                })->each(function ($row) {
-                    $primaryKey = ['brand' => $row['brand'], 'mspn' => $row['mspn']];
-                    Catalog::updateOrCreate($primaryKey, $row);
-                });
-            }
-            return redirect()->back()->with(['match' => 'Excel imported successfully', 'rows' => $rows]);
-        } else {
-            return redirect()->back()->with(['error' => 'Excel is not match from database columns']);
-        }
+        ExcelQueue::dispatch($filePath)->onQueue('imports');
     }
     public function export(Request $request)
     {

@@ -6,14 +6,17 @@
                 <div class="container mt-4">
                     <div class="row justify-content-center">
                         <div class="col-md-12">
-                            @if (session('error'))
-                                <div class="alert alert-danger">
-                                    {{ session('error') }}
-                                </div>
-                            @endif
                             @if (session('match'))
                                 <div class="alert alert-success">
                                     {{ session('match') }}
+                                </div>
+                            @elseif(session('error'))
+                                <div style="background-color:red;">
+                                    {{ session('error') }}
+                                </div>
+                            @elseif(session('success'))
+                                <div class="alert alert-danger">
+                                    {{ session('success') }}
                                 </div>
                             @endif
                             <div class="modal fade" id="filterModal" tabindex="-1" role="dialog"
@@ -48,37 +51,36 @@
                                 <div class="card-body">
                                     <div class="container mt-2">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <div class="h2 w-50">Upload Catalog</div>
-                                            <div class="input-group d-grid gap-2 d-md-flex justify-content-md-end">
-                                                <button class="rounded-pill p-2 fs-6 btn btn-secondary"
-                                                    style="width: 170px;" data-toggle="modal" data-target="#filterModal"><i
-                                                        class="fa fa-filter" aria-hidden="true"></i> FILTER</button>
+                                            <div class="h2 w-50">ADD CATALOG</div>
+                                            <div class="input-group d-grid gap-4 d-md-flex justify-content-md-end">
                                                 <form action="{{ route('catalog.export') }}" method="post">
                                                     @csrf
                                                     <input type="hidden" name="hidden_columns[]" id="hiddenColumnsInput">
                                                     <button type="submit" class="rounded-pill p-2 fs-6 btn btn-secondary"
-                                                        style="width: 190px;"><i class="fa-solid fa-file-arrow-down"></i>
-                                                        Download
-                                                        Template</button>
+                                                        style="width: 250px;"><i class="fa-solid fa-file-arrow-down"></i>
+                                                        DOWNLOAD TEMPLATE</button>
                                                 </form>
                                                 <form method="POST" id="myForm" action="{{ route('import') }}"
                                                     enctype="multipart/form-data">
                                                     @csrf
-                                                    <input class="" id="file_input" style="display:none"
-                                                        type="file" name="excel_file" accept=".csv,.xls,.xlsx">
+                                                    <input id="file_input" style="display:none" type="file"
+                                                        name="excel_file" accept=".csv,.xls,.xlsx">
                                                     <button type="button" onclick="selectFile()"
                                                         class="rounded-pill p-2 fs-6 btn btn-secondary"
-                                                        style="width: 210px;"><i class="fa-solid fa-file-arrow-up"></i>
+                                                        style="width: 250px;"><i class="fa-solid fa-file-arrow-up"></i>
                                                         UPLOAD A NEW FILE</button>
                                                 </form>
                                             </div>
                                         </div>
+                                        <button class="p-2 mt-2 btn btn-secondary" style="width: 150px;" data-toggle="modal"
+                                            data-target="#filterModal"><i class="fa fa-filter" aria-hidden="true"></i>
+                                            FILTER</button>
                                     </div>
                                     @if (isset($empty))
                                         <p class="text-center fs-3 mt-4">{{ $empty }}</p>
                                     @else
-                                        <div class="table-responsive mt-4">
-                                            <table class="table table-bordered text-justify">
+                                        <div class="h-75 table-responsive mt-4">
+                                            <table class="vh-100 table table-bordered border-dark text-justify">
                                                 <thead>
                                                     <tr>
                                                         @foreach ($columns as $column)
