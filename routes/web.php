@@ -60,4 +60,5 @@ Route::get('/export', [FileController::class, 'export'])->name('export.excel');
 
 Route::get('/', [ExcelImporterController::class, 'index'])->name('view');
 Route::post('/import', [ExcelImporterController::class, 'import'])->name('import');
+Route::post('/export', [ExcelImporterController::class, 'export'])->name('catalog.export');
 
