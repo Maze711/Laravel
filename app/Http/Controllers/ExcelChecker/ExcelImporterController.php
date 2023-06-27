@@ -30,6 +30,8 @@ class ExcelImporterController extends Controller
     }
     public function Import(Request $request)
     {
+        set_time_limit(300);
+        ini_set('memory_limit', '10G'); 
         $request->validate([
             'excel_file' => 'required|mimes:csv,xls,xlsx'
         ]);
@@ -41,10 +43,10 @@ class ExcelImporterController extends Controller
         $worksheet = $spreadsheet->getActiveSheet();
 
         $rowCount = $worksheet->getHighestRow();
-        $rowsPerChunk = ceil($rowCount / 500);
+        $rowsPerChunk = ceil($rowCount / 10);
 
         $chunks = [];
-        for ($chunkIndex = 1; $chunkIndex <= 1000; $chunkIndex++) {
+        for ($chunkIndex = 1; $chunkIndex <= 200; $chunkIndex++) {
             $chunkSpreadsheet = new Spreadsheet();
             $chunkWorksheet = $chunkSpreadsheet->getActiveSheet();
 
@@ -73,7 +75,8 @@ class ExcelImporterController extends Controller
 
     private function importChunkToDatabase($chunkPath)
     {
-        set_time_limit(120);
+        set_time_limit(200);
+        ini_set('memory_limit', '10G'); 
         $chunkSpreadsheet = IOFactory::load($chunkPath);
         $chunkWorksheet = $chunkSpreadsheet->getActiveSheet();
         $requiredColumns = ['brand', 'category'];
