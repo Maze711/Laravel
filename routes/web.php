@@ -58,7 +58,7 @@ Route::delete('/users/{user}', [UserFormController::class, 'destroy'])->name('us
 // Export Excel Function
 Route::get('/export', [FileController::class, 'export'])->name('export.excel');
 
-Route::get('/catalog', [ExcelImporterController::class, 'index'])->name('view');
+Route::get('/', [ExcelImporterController::class, 'index'])->name('view');
 Route::post('/import', [ExcelImporterController::class, 'import'])->name('import');
-Route::post('/catalog/export', [ExcelImporterController::class, 'export'])->name('catalog.export');
+Route::post('/export', [ExcelImporterController::class, 'export'])->name('catalog.export');
 
