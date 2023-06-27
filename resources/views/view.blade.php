@@ -11,7 +11,7 @@
                                     {{ session('match') }}
                                 </div>
                             @elseif(session('error'))
-                                <div style="background-color:red;">
+                                <div class="alert alert-danger">
                                     {{ session('error') }}
                                 </div>
                             @elseif(session('success'))

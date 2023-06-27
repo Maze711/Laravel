@@ -3,14 +3,13 @@
 namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Schema;
 use App\Models\Catalog;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ExcelQueue implements ShouldQueue
@@ -36,108 +35,67 @@ class ExcelQueue implements ShouldQueue
      */
     public function handle()
     {
-        set_time_limit(120);
         $spreadsheet = IOFactory::load($this->filePath);
         $worksheet = $spreadsheet->getActiveSheet();
-        $headerRow = $worksheet->getRowIterator()->current();
 
-        $requiredColumns = ['brand', 'category'];
-        $columnIndices = [];
-        $emptyRows = [];
-        $maxAttempts = 2;
-        $attempt = 0;
+        $rowCount = $worksheet->getHighestRow();
+        $rowsPerChunk = ceil($rowCount / 10);
 
-        while ($attempt < $maxAttempts) {
-            try {
-                $spreadsheet = IOFactory::load($this->filePath);
-                $worksheet = $spreadsheet->getActiveSheet();
-                $headerRow = $worksheet->getRowIterator()->current();
+        $chunks = [];
+        for ($chunkIndex = 1; $chunkIndex <= 10; $chunkIndex++) {
+            $chunkSpreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $chunkWorksheet = $chunkSpreadsheet->getActiveSheet();
 
-                foreach ($requiredColumns as $requiredColumn) {
-                    $columnIndex = null;
+            // Set the headers in the first row of each chunk
+            $headers = $worksheet->rangeToArray('A1:' . $worksheet->getHighestColumn() . '1', null, true, false);
+            $chunkWorksheet->fromArray($headers[0], null, 'A1');
 
-                    foreach ($headerRow->getCellIterator() as $cell) {
-                        $cellValue = $cell->getValue();
+            // Set the rows for the current chunk
+            $startRow = ($chunkIndex - 1) * $rowsPerChunk + 2;
+            $endRow = min($startRow + $rowsPerChunk - 1, $rowCount);
+            $rows = $worksheet->rangeToArray('A' . $startRow . ':' . $worksheet->getHighestColumn() . $endRow, null, true, false);
+            $chunkWorksheet->fromArray($rows, null, 'A2');
 
-                        if ($cellValue === $requiredColumn) {
-                            $columnIndex = $cell->getColumn();
-                            break;
-                        }
-                    }
+            // Save the chunk as a temporary file
+            $tempFilePath = 'excel_chunks/' . uniqid('excel_chunk_') . '.xlsx';
+            $writer = IOFactory::createWriter($chunkSpreadsheet, 'Xlsx');
+            $writer->save(storage_path('app/' . $tempFilePath));
 
-                    if ($columnIndex === null) {
-                        // Handle the case where a required column is not found in the header row
-                        throw new \ErrorException('Required column "' . $requiredColumn . '" not found in the Excel file.');
-                    }
+            $chunks[] = storage_path('app/' . $tempFilePath);
+        }
+        foreach ($chunks as $chunkPath) {
+            $this->importChunkToDatabase($chunkPath);
+            Storage::delete($chunkPath);
+        }
+    }
 
-                    $columnIndices[$requiredColumn] = $columnIndex;
-                }
+    private function importChunkToDatabase($chunkPath)
+    {
+        $chunkSpreadsheet = IOFactory::load($chunkPath);
+        $chunkWorksheet = $chunkSpreadsheet->getActiveSheet();
+        $requiredColumns = ['brand'];
 
-                foreach ($worksheet->getRowIterator() as $row) {
-                    if ($row->getRowIndex() === $headerRow->getRowIndex()) {
-                        // Skip the header row
-                        continue;
-                    }
+        $rows = $chunkWorksheet->toArray();
+        $headerRow = array_shift($rows); // Remove the header row from the rows array
 
-                    foreach ($requiredColumns as $requiredColumn) {
-                        $columnIndex = $columnIndices[$requiredColumn];
-                        $cell = $worksheet->getCell($columnIndex . $row->getRowIndex());
-                        $cellValue = $cell->getValue();
-
-                        if (empty($cellValue)) {
-                            // Store the index of the empty row for further processing or validation
-                            $emptyRows[$row->getRowIndex()][] = $requiredColumn;
-                        }
-                    }
-                }
-
-                if (!empty($emptyRows)) {
-                    // Handle the case where there are empty values in the required columns
-                    $errorMessage = 'Empty values found in the following required columns: ';
-                    foreach ($emptyRows as $rowIndex => $columns) {
-                        $errorMessage .= 'Row ' . $rowIndex . ': ' . implode(', ', $columns) . '; ';
-                    }
-                    throw new \ErrorException($errorMessage);
-                }
-
-                // Import Function
-                $rows = $worksheet->toArray();
-                $worksheet = $rows[0];
-                $dataRows = array_slice($rows, 1);
-                $collection = collect($worksheet);
-                $dataIndexNames = $collection->values()->toArray();
-                $dataIndexNamesString = implode(', ', $dataIndexNames);
-
-                $databaseColumnNames = Schema::getColumnListing('catalogs');
-                array_shift($databaseColumnNames);
-                $indexNamesString = implode(', ', $databaseColumnNames);
-
-                $areColumnsEqual = ($dataIndexNamesString === $indexNamesString);
-
-                if ($areColumnsEqual) {
-                    $collection = collect($dataRows);
-                    $results = $collection->map(function ($row) use ($dataIndexNames) {
-                        return array_combine($dataIndexNames, $row);
-                    });
-
-                    $results->each(function ($row) {
-                        $primaryKey = ['brand' => $row['brand'], 'mspn' => $row['mspn']];
-                        Catalog::updateOrCreate($primaryKey, $row);
-                    });
-
-                    throw new \Exception('Excel Imported Successfully');
-                } else {
-                    throw new \ErrorException('Columns from the Excel file do not match the database columns');
-                }
-            } catch (\Exception $e) {
-                $attempt++;
-                if ($attempt < $maxAttempts) {
-                    sleep(10); // Delay for 1 minute before the next attempt
-                } else {
-                    // After 5 attempts, throw the exception to return the errors
-                    throw $e;
-                }
+        foreach ($rows as $row) {
+            $data = array_combine($headerRow, $row);
+            if ($this->validateRequiredColumns($data, $requiredColumns)) {
+                $primaryKey = ['brand' => $data['brand'], 'mspn' => $data['mspn']];
+                Catalog::updateOrCreate($primaryKey, $data);
             }
         }
+        File::delete($chunkPath);
+        throw new \Exception('Excel Imported Successfully');
+    }
+
+    private function validateRequiredColumns($data, $requiredColumns)
+    {
+        foreach ($requiredColumns as $column) {
+            if (empty($data[$column])) {
+                return false;
+            }
+        }
+        return true;
     }
 }
