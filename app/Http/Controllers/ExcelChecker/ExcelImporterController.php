@@ -77,52 +77,54 @@ class ExcelImporterController extends Controller
 
                 $batchChunks[] = storage_path('app/' . $tempFilePath);
             }
-
             $chunks[] = $batchChunks;
+
+            $this->importBatchChunks($batchChunks);
         }
+    
+        return redirect()->back()->with(['match' => 'Excel imported successfully']);
+    }
 
+    private function importBatchChunks($batchChunks)
+    {
+        // Importer Chunks
+        foreach ($batchChunks as $chunkPath) {
+            $chunkSpreadsheet = IOFactory::load($chunkPath);
+            $chunkWorksheet = $chunkSpreadsheet->getActiveSheet();
+            $requiredColumns = ['brand', 'category'];
 
-        foreach ($chunks as $batchChunks) {
-            foreach ($batchChunks as $chunkPath) {
-                $chunkSpreadsheet = IOFactory::load($chunkPath);
-                $chunkWorksheet = $chunkSpreadsheet->getActiveSheet();
-                $requiredColumns = ['brand', 'category'];
+            $rows = $chunkWorksheet->toArray();
+            $headerRow = array_shift($rows); // Remove the header row from the rows array
 
-                $rows = $chunkWorksheet->toArray();
-                $headerRow = array_shift($rows); // Remove the header row from the rows array
+            foreach ($rows as $row) {
+                $data = array_combine($headerRow, $row);
+                if ($this->validateRequiredColumns($data, $requiredColumns, $chunkPath)) {
+                    $existingRow = Catalog::where('brand', $data['brand'])
+                        ->where('mspn', $data['mspn'])
+                        ->first();
 
-                foreach ($rows as $row) {
-                    $data = array_combine($headerRow, $row);
-                    if ($this->validateRequiredColumns($data, $requiredColumns, $chunkPath)) {
-                        $existingRow = Catalog::where('brand', $data['brand'])
-                            ->where('mspn', $data['mspn'])
-                            ->first();
-
-                        if ($existingRow) {
-                            // Row already exists in the database
-                            $shouldUpdate = false;
-                            foreach ($requiredColumns as $column) {
-                                if ($data[$column] != $existingRow->$column) {
-                                    // Updated data found in one of the required columns, update the row
-                                    $shouldUpdate = true;
-                                    break;
-                                }
-                            }
-                            if (!$shouldUpdate) {
-                                // No updates found in required columns, skip this row
-                                continue;
+                    if ($existingRow) {
+                        // Row already exists in the database
+                        $shouldUpdate = false;
+                        foreach ($requiredColumns as $column) {
+                            if ($data[$column] != $existingRow->$column) {
+                                // Updated data found in one of the required columns, update the row
+                                $shouldUpdate = true;
+                                break;
                             }
                         }
-
-                        $primaryKey = ['brand' => $data['brand'], 'mspn' => $data['mspn']];
-                        Catalog::updateOrCreate($primaryKey, $data);
+                        if (!$shouldUpdate) {
+                            // No updates found in required columns, skip this row
+                            continue;
+                        }
                     }
-                }
-                File::delete($chunkPath);
-            }
-        }
 
-        return redirect()->back()->with(['match' => 'Excel imported successfully']);
+                    $primaryKey = ['brand' => $data['brand'], 'mspn' => $data['mspn']];
+                    Catalog::updateOrCreate($primaryKey, $data);
+                }
+            }
+            File::delete($chunkPath);
+        }
     }
 
 
