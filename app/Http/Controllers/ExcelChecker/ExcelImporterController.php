@@ -32,7 +32,7 @@ class ExcelImporterController extends Controller
     {
         // create a method to check in excel if the row is already existing in database remove it to chunk, 
         // but if there is updated cell from that row insert it to the chunk 
-        ini_set('max_execution_time', 1000);
+        ini_set('max_execution_time', 1000); //16 minutes and 14 seconds
         ini_set('memory_limit', '10G');
         $request->validate([
             'excel_file' => 'required|mimes:csv,xls,xlsx'
