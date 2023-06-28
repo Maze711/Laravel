@@ -9,6 +9,9 @@ use App\Http\Controllers\ExcelController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\HomeController;
 
+use App\Http\Controllers\ExcelChecker\ExcelImporterController;
+
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -19,12 +22,6 @@ use App\Http\Controllers\HomeController;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
-// Route::get('/', function () {
-//     return view('welcome');
-// });
-
-
 // TO-DO LIST Web (on going)
 // Route::get('/tasks', 'App\Http\Controllers\TaskController@index');
 // Route::post('/tasks', 'App\Http\Controllers\TaskController@store');
@@ -32,12 +29,13 @@ use App\Http\Controllers\HomeController;
 // Route::put('/tasks/{id}', 'App\Http\Controllers\TaskController@update');
 // Route::delete('/tasks/{id}', 'App\Http\Controllers\TaskController@destroy');
 
-// Registration
+// Registration Function
 Route::get('/form', [FormController::class, 'index'])->name('form');
 Route::post('store-form', [FormController::class, 'store']);
 
 Route::get('/home', [UserFormController::class, 'index'])->name('home');
 
+// Login Function
 Route::namespace('Auth')->group(function () {
     Route::get('/login', [LoginController::class, 'login'])->name('login');
     Route::post('login', [LoginController::class, 'processLogin']);
@@ -54,6 +52,13 @@ Route::put('/users/{user}', [UserFormController::class, 'update'])->name('users.
 Route::get('/add', [UserFormController::class, 'create'])->name('users.add');
 Route::post('/add', [UserFormController::class, 'add'])->name('users.add');
 
+// Delete User Function
 Route::delete('/users/{user}', [UserFormController::class, 'destroy'])->name('users.destroy');
 
+// Export Excel Function
 Route::get('/export', [FileController::class, 'export'])->name('export.excel');
+
+Route::get('/', [ExcelImporterController::class, 'index'])->name('view');
+Route::post('/import', [ExcelImporterController::class, 'import'])->name('import');
+Route::post('/export', [ExcelImporterController::class, 'export'])->name('catalog.export');
+

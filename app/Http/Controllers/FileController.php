@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use App\Http\Controllers\ExcelController;
 use App\Models\User;
 
 class FileController extends Controller
@@ -28,7 +27,7 @@ class FileController extends Controller
         // Save the spreadsheet as an Excel file
         $writer = new Xlsx($spreadsheet);
         $fileName = 'Accounts.xlsx';
-        $filePath = app_path('Downloads/' . $fileName);
+        $filePath = public_path('Downloads/' . $fileName);
 
         $writer->save($filePath);
 

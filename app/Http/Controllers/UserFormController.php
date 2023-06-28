@@ -5,9 +5,15 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Illuminate\Support\Facades\Validator;
+
 
 class UserFormController extends Controller
 {
+    // Retrieve User Function
     public function index()
     {
         $users = User::select('id', 'name', 'email', 'email_verified_at', 'created_at', 'updated_at')
@@ -26,6 +32,35 @@ class UserFormController extends Controller
     }
     public function add(Request $request)
     {
+
+        $file = public_path('Downloads/Accounts.xlsx');
+        $excel = IOFactory::load($file);
+
+        $worksheet = $excel->getActiveSheet();
+        $rows = $worksheet->toArray();
+        // dd($rows);
+        $newData = [
+            'name' => $request->input('name'),
+            'email' => $request->input('email'),
+        ];
+        // dd($newData);
+        $headers = $rows[0]; // Get the headers from the first row
+        $dataRows = array_slice($rows, 1); // Remove the first row from the data
+
+        $existingData = [];
+        foreach ($rows as $row) {
+            $existingData = [
+                'name' => $row[1],
+                'email' => $row[2],
+            ];
+
+            // Compare the existing data with the new data
+            if ($existingData['name'] === $newData['name'] && $existingData['email'] === $newData['email']) {
+                // Data already exists in the Excel file
+                return redirect()->back()->with('error', 'Data already exists in the Excel file.');
+            }
+        }
+
         $validatedData = $request->validate([
             'name' => 'required|unique:users',
             'email' => 'required|email|unique:users',
@@ -35,15 +70,34 @@ class UserFormController extends Controller
         $user = new User;
         $user->name = $request->input('name');
         $user->email = $request->input('email');
-        $user->password = Hash::make($request->input('password'));
+        $user->password = $request->input('password');
         $user->save();
+        // retrieve data from database
+        $id = $user->id;
+        $created = $user->created_at;
+        $updated = $user->updated_at;
 
-        $users = User::select('id', 'name', 'email', 'email_verified_at', 'created_at', 'updated_at')
-            ->get();
-        return view('home')->with(['users' => $users, 'Success', 'User created successfully.']);
 
-        // return redirect()->back()
+        $file = public_path('Downloads/Accounts.xlsx');
+        $excel = IOFactory::load($file);
+
+        $worksheet = $excel->getActiveSheet();
+        $highestRow = $worksheet->getHighestRow();
+        $worksheet->setCellValue('A' . ($highestRow + 1), $id);
+        $worksheet->setCellValue('B' . ($highestRow + 1), $newData['name']);
+        $worksheet->setCellValue('C' . ($highestRow + 1), $newData['email']);
+        $worksheet->setCellValue('D' . ($highestRow + 1), ' ');
+        $worksheet->setCellValue('E' . ($highestRow + 1), $created);
+        $worksheet->setCellValue('F' . ($highestRow + 1), $updated);
+
+        $writer = IOFactory::createWriter($excel, 'Xlsx');
+
+        $writer->save($file);
+
+        return redirect()->route('home')->with('success', 'User created successfully.');
     }
+    // Finish Add User Function
+
 
     // Edit User Function
     public function edit($id)
@@ -62,9 +116,9 @@ class UserFormController extends Controller
 
         $user->update($validatedData);
 
-        return redirect()->route('home', ['user' => $user->id]);
+        return redirect()->route('home')->with('success', 'User edit successfully.');
     }
-
+    //Finish Edit User Function
 
     //Delete User Function
     public function destroy(User $user)
@@ -72,6 +126,6 @@ class UserFormController extends Controller
 
         $user->delete();
 
-        return redirect()->back()->with('Success', 'User Deleted Successfully.');
+        return redirect()->route('home')->with('success', 'User deleted successfully.');
     }
 }
