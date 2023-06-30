@@ -19,30 +19,34 @@
                                     {{ session('success') }}
                                 </div>
                             @endif
-                            <div class="modal fade" id="filterModal" tabindex="-1" role="dialog"
-                                aria-labelledby="filterModalLabel" aria-hidden="true">
-                                <div class="modal-dialog" role="document">
+
+                            <!-- Filter modal -->
+                            <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel"
+                                aria-hidden="true">
+                                <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="filterModalLabel">Toggle Columns</h5>
-                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
+                                            <h5 class="modal-title" id="filterModalLabel">Filter Catalog</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">
-                                            <input type="text" id="columnSearch" class="form-control mb-2"
-                                                placeholder="Search columns">
-                                            @foreach ($columns as $column)
-                                                <div class="form-check column-check">
-                                                    <input type="checkbox" name="columns[]" value="{{ $column }}"
-                                                        class="form-check-input column-toggle">
-                                                    <label class="form-check-label">{{ $column }}</label>
-                                                </div>
-                                            @endforeach
+                                            <!-- Add your filter form or inputs here -->
+                                            <!-- Example: -->
+                                            <div class="mb-3">
+                                                <label for="filterName" class="form-label">Name</label>
+                                                <input type="text" class="form-control" id="filterName">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="filterCategory" class="form-label">Category</label>
+                                                <input type="text" class="form-control" id="filterCategory">
+                                            </div>
+                                            <!-- Add more filter inputs as needed -->
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-primary"
-                                                data-dismiss="modal">Close</button>
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Close</button>
+                                            <button type="button" class="btn btn-primary">Apply Filter</button>
                                         </div>
                                     </div>
                                 </div>
@@ -72,15 +76,17 @@
                                                 </form>
                                             </div>
                                         </div>
-                                        <button class="p-2 mt-2 btn btn-secondary" style="width: 150px;" data-toggle="modal"
-                                            data-target="#filterModal"><i class="fa fa-filter" aria-hidden="true"></i>
-                                            FILTER</button>
+                                        <button id="filterButton" class="rounded-pill fs-6 btn btn-secondary" type="button"
+                                            style="width: 250px;">
+                                            <i class="fa-solid fa-filter"></i> FILTER
+                                        </button>
                                     </div>
                                     @if (isset($empty))
                                         <p class="text-center fs-3 mt-4">{{ $empty }}</p>
                                     @else
                                         <div class="h-75 table-responsive mt-4">
-                                            <table class="vh-100 table table-bordered border-dark text-justify">
+                                            <table id="catalogTable"
+                                                class="vh-100 table table-bordered border-dark text-justify">
                                                 <thead>
                                                     <tr>
                                                         @foreach ($columns as $column)
@@ -99,25 +105,6 @@
                                                     @endforeach
                                                 </tbody>
                                             </table>
-                                        </div>
-                                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                                            @if ($rows->previousPageUrl())
-                                                <a href="{{ $rows->previousPageUrl() }}"
-                                                    class="rounded-pill btn btn-secondary" style="width: 150px;"><i
-                                                        class="fas fa-arrow-left"></i> Previous Page</a>
-                                            @endif
-
-                                            <button class="rounded-pill fs-6 btn btn-secondary" type="button"
-                                                id="pageDropdown" data-bs-toggle="dropdown" aria-expanded="false"
-                                                style="width: 100px;">
-                                                Page {{ $rows->currentPage() }}
-                                            </button>
-
-                                            @if ($rows->hasMorePages())
-                                                <a href="{{ $rows->nextPageUrl() }}"
-                                                    class="rounded-pill fs-6 btn btn-secondary" style="width: 150px;">Next
-                                                    Page <i class="fas fa-arrow-right"></i></a>
-                                            @endif
                                         </div>
                                     @endif
                                 </div>
@@ -139,49 +126,13 @@
         });
 
         $(document).ready(function() {
-            // Update hidden column input when checkboxes are toggled
-            $('.column-toggle').change(function() {
-                hideColumns();
+            // Initialize DataTables
+            $('#catalogTable').DataTable();
+
+            // Filter modal functionality
+            $('#filterButton').click(function() {
+                $('#filterModal').modal('show');
             });
-
-            // Filter columns based on search input
-            $('#columnSearch').keyup(function() {
-                filterColumns();
-            });
-
-            // Update hidden column input on modal close
-            $('#filterModal').on('hidden.bs.modal', function() {
-                hideColumns();
-            });
-
-            // Function to hide columns
-            function hideColumns() {
-                $('.table th, .table td').each(function() {
-                    var columnText = $(this).text().trim().toLowerCase();
-                    var isHidden = $('.column-toggle[value="' + columnText + '"]').is(':checked');
-                    $(this).toggle(!isHidden);
-                    $('td:nth-child(' + ($(this).index() + 1) + ')').toggle(!isHidden);
-                });
-            }
-
-            // Function to filter columns based on search input
-            function filterColumns() {
-                var searchValue = $('#columnSearch').val().trim().toLowerCase();
-                $('.table th').each(function() {
-                    var columnText = $(this).text().trim().toLowerCase();
-                    var isHidden = $('.column-toggle[value="' + columnText + '"]').is(':checked');
-                    if (searchValue === '' || columnText.includes(searchValue)) {
-                        $(this).toggle(!isHidden);
-                        $('td:nth-child(' + ($(this).index() + 1) + ')').toggle(!isHidden);
-                    } else {
-                        $(this).hide();
-                        $('td:nth-child(' + ($(this).index() + 1) + ')').hide();
-                    }
-                });
-            }
-
-            // Initialize column visibility on page load
-            hideColumns();
         });
     </script>
 
