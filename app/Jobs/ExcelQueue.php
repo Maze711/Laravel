@@ -13,6 +13,8 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class ExcelQueue implements ShouldQueue
 {
@@ -38,6 +40,7 @@ class ExcelQueue implements ShouldQueue
     public function handle()
     {
         ini_set('memory_limit', '10G');
+
         $temporaryPath = $this->temporaryPath;
         $filePath = storage_path('app/' . $temporaryPath);
 
@@ -48,16 +51,26 @@ class ExcelQueue implements ShouldQueue
         $rows = $worksheet->toArray();
         $headerRow = array_shift($rows); // Remove the header row from the rows array
 
+        $progressOutput = new ConsoleOutput();
+        $progressBar = new ProgressBar($progressOutput, count($rows));
+        $progressBar->setFormat('debug');
+        $progressBar->start();
+
         foreach ($rows as $row) {
             $data = array_combine($headerRow, $row);
             if ($this->validateRequiredColumns($data, $requiredColumns)) {
                 $primaryKey = ['brand' => $data['brand'], 'mspn' => $data['mspn']];
                 Catalog::updateOrCreate($primaryKey, $data);
             }
+
+            $progressBar->advance();
         }
 
+        $progressBar->finish();
+        $progressOutput->writeln('');
+
         Storage::disk('local')->delete($temporaryPath);
-        throw new \Exception('Excel Imported Successfully');
+        // throw new \Exception('Excel Imported Successfully');
     }
 
     /**
