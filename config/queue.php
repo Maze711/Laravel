@@ -39,7 +39,8 @@ return [
             'table' => 'jobs',
             'queue' => 'default',
             'retry_after' => 90,
-            'after_commit' => false,
+            'timeout' => 1000,
+            'connection' => 'mysql',
         ],
 
         'beanstalkd' => [
