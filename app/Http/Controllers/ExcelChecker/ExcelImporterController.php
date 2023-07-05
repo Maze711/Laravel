@@ -14,30 +14,87 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Facades\Schedule;
+use Illuminate\Pagination\Paginator;
 
 
 class ExcelImporterController extends Controller
 {
     public function index(Request $request)
     {
-        $rows = Catalog::paginate(100);
-        // dd($rows);
-        if (empty($rows)) {
-            return view('view',  ['empty' => 'The Database is empty.']);
+        $perPage = 10; // Number of rows per page
+        $page = $request->query('page', 1);
+
+        // Fetch the data from the database using pagination
+        $rows = Catalog::paginate($perPage, ['*'], 'page', $page);
+
+        if ($rows->isEmpty()) {
+            return view('view', ['empty' => 'The Database is empty.']);
         } else {
             $databaseColumnNames = Schema::getColumnListing('catalogs');
 
-            return view('view', ['rows' => $rows, 'columns' => $databaseColumnNames]);
+            // Pass the pagination data along with the rows and column names
+            return view('view', [
+                'rows' => $rows,
+                'columns' => $databaseColumnNames,
+                'pagination' => $rows->links()->toHtml()
+            ]);
         }
     }
-    
+
+    public function getData($page)
+    {
+        $perPage = 10; // Number of rows per page
+
+        // Fetch the data from the database using pagination
+        $rows = Catalog::paginate($perPage, ['*'], 'page', $page);
+
+        // Render the view and pass the data
+        $html = view('partials.rows')->with('rows', $rows)->render();
+        $pagination = $rows->links()->toHtml();
+
+        // Return the JSON response with the data and pagination links
+        return response()->json([
+            'data' => $html,
+            'pagination' => $pagination,
+        ]);
+    }
+
     public function Import(Request $request)
     {
+        set_time_limit(500);
+        ini_set('memory_limit', '50G');
+        ini_set('post_max_size', '1000G');
+        ini_set('upload_max_filesize', '1000G');
         $request->validate([
             'excel_file' => 'required|mimes:csv,xls,xlsx'
         ]);
 
         $file = $request->file('excel_file');
+        $filePath = $file->getPathname();
+
+        $spreadsheet = IOFactory::load($filePath);
+        $worksheet = $spreadsheet->getActiveSheet();
+
+        $rows = $worksheet->toArray();
+        $highestRow = $rows[0];
+        $sliceHighestRow = array_slice($rows, 1);
+        $collection = collect($highestRow);
+
+        $dataIndexNames = $collection->values()->toArray();
+        $dataIndexNamesString = implode(', ', $dataIndexNames);
+        // dd($dataIndexNamesString);
+
+        $databaseColumnNames = Schema::getColumnListing('catalogs');
+        array_shift($databaseColumnNames);
+        $indexNamesString = implode(', ', $databaseColumnNames);
+        // dd($indexNamesString);
+
+        $areColumnsEqual = ($dataIndexNamesString === $indexNamesString);
+        // dd($areColumnsEqual);
+
+        if (!$areColumnsEqual) {
+            return redirect()->back()->with(['error' => 'There is error in the column header']);
+        }
         $temporaryPath = 'excel_chunks/' . $file->getClientOriginalName();
         Storage::disk('local')->put($temporaryPath, file_get_contents($file));
 

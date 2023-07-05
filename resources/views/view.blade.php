@@ -99,6 +99,10 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div class="h2 w-50">ADD CATALOG</div>
                                             <div class="input-group d-grid gap-4 d-md-flex justify-content-md-end">
+                                                <button id="filterButton" class="rounded-pill fs-6 btn btn-secondary"
+                                                    type="button" style="width: 250px;">
+                                                    <i class="fa-solid fa-filter"></i> FILTER
+                                                </button>
                                                 <form action="{{ route('catalog.export') }}" method="post">
                                                     @csrf
                                                     <input type="hidden" name="hidden_columns[]" id="hiddenColumnsInput">
@@ -118,10 +122,6 @@
                                                 </form>
                                             </div>
                                         </div>
-                                        <button id="filterButton" class="rounded-pill fs-6 btn btn-secondary" type="button"
-                                            style="width: 250px;">
-                                            <i class="fa-solid fa-filter"></i> FILTER
-                                        </button>
                                     </div>
                                     @if (isset($empty))
                                         <p class="text-center fs-3 mt-4">{{ $empty }}</p>
@@ -146,6 +146,33 @@
                                                 @endforeach
                                             </tbody>
                                         </table>
+                                        <div id="paginationContainer">
+                                            <ul class="pagination justify-content-md-end mt-3">
+                                                @if ($rows->currentPage() > 1)
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ $rows->previousPageUrl() }}"
+                                                            aria-label="Previous">
+                                                            <span aria-hidden="true">&laquo; Previous</span>
+                                                        </a>
+                                                    </li>
+                                                @endif
+
+                                                @foreach ($rows->getUrlRange($rows->currentPage(), $rows->currentPage()) as $page => $url)
+                                                    <li class="page-item active">
+                                                        <span class="page-link">{{ $page }}</span>
+                                                    </li>
+                                                @endforeach
+
+                                                @if ($rows->hasMorePages())
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ $rows->nextPageUrl() }}"
+                                                            aria-label="Next">
+                                                            <span aria-hidden="true">Next &raquo;</span>
+                                                        </a>
+                                                    </li>
+                                                @endif
+                                            </ul>
+                                        </div>
                                     @endif
                                 </div>
                             </div>
@@ -166,6 +193,17 @@
         });
 
         $(document).ready(function() {
+            function fetchData(page) {
+                $.ajax({
+                    url: '/get-data/' + page,
+                    type: 'GET',
+                    success: function(response) {
+                        // Update the data container with the received data
+                        $('#catalogTable tbody').html(response.data);
+                    }
+                });
+            }
+
             $('#filterButton').click(function() {
                 $('#filterModal').modal('show');
             });
@@ -215,7 +253,9 @@
                 "columnDefs": [{
                     "targets": '_all',
                     "orderable": true // Enable sorting for all columns
-                }]
+                }],
+                "paging": false, // Disable the built-in pagination
+                "info": false
             });
 
             // Event listener for Filter button
@@ -234,14 +274,14 @@
                         })
                         .on('keyup change clear', function() {
                             searchFilters[column.index()] = this
-                            .value; // Store the search filter value
+                                .value; // Store the search filter value
                         });
 
                     var label = $('<label for="filter_' + column.index() + '">' + title +
                         '</label>');
 
                     var formGroup = $(
-                        '<div class="col-md-4"></div>') // Set the width of the input column
+                            '<div class="col-md-4"></div>') // Set the width of the input column
                         .append(label, input);
 
                     form.append(formGroup);
@@ -265,6 +305,27 @@
 
                 $('#filterModal .modal-body').empty().append(modalContent);
             });
+
+            // Event listener for pagination links
+            $('#catalogTable_wrapper .pagination').on('click', 'a', function(e) {
+                e.preventDefault();
+                var page = $(this).attr('href').split('page=')[1];
+                fetchData(page);
+            });
+
+            function fetchData(page) {
+                $.ajax({
+                    url: '/get-data/' + page,
+                    type: 'GET',
+                    success: function(response) {
+                        // Update the data container with the received data
+                        $('#catalogTable tbody').html(response.data);
+
+                        $('#catalogTable_wrapper .pagination').html(response.pagination);
+
+                    }
+                });
+            }
         });
     </script>
 

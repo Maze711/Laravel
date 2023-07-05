@@ -8,13 +8,13 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Artisan;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Illuminate\Support\Facades\Log;
 
 class ExcelQueue implements ShouldQueue
 {
@@ -39,7 +39,9 @@ class ExcelQueue implements ShouldQueue
      */
     public function handle()
     {
-        ini_set('memory_limit', '10G');
+        ini_set('memory_limit', '50G');
+        ini_set('post_max_size', '1000G');
+        ini_set('upload_max_filesize', '1000G');
 
         $temporaryPath = $this->temporaryPath;
         $filePath = storage_path('app/' . $temporaryPath);
@@ -64,6 +66,7 @@ class ExcelQueue implements ShouldQueue
             }
 
             $progressBar->advance();
+            Log::info('Progress: ' . $progressBar->getProgress());
         }
 
         $progressBar->finish();
