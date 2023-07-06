@@ -58,66 +58,66 @@ class ExcelImporterController extends Controller
         ]);
     }
 
-    // public function Import(Request $request)
-    // {
-    //     set_time_limit(500);
-    //     ini_set('memory_limit', '50G');
-    //     $request->validate([
-    //         'excel_file' => 'required|mimes:csv,xls,xlsx'
-    //     ]);
-
-    //     $file = $request->file('excel_file');
-    //     $filePath = $file->getPathname();
-
-    //     $spreadsheet = IOFactory::load($filePath);
-    //     $worksheet = $spreadsheet->getActiveSheet();
-
-    //     $rows = $worksheet->toArray();
-    //     $highestRow = $rows[0];
-    //     $sliceHighestRow = array_slice($rows, 1);
-    //     $collection = collect($highestRow);
-
-    //     $dataIndexNames = $collection->values()->toArray();
-    //     $dataIndexNamesString = implode(', ', $dataIndexNames);
-    //     // dd($dataIndexNamesString);
-
-    //     $databaseColumnNames = Schema::getColumnListing('catalogs');
-    //     array_shift($databaseColumnNames);
-    //     $indexNamesString = implode(', ', $databaseColumnNames);
-    //     // dd($indexNamesString);
-
-    //     $areColumnsEqual = ($dataIndexNamesString === $indexNamesString);
-    //     // dd($areColumnsEqual);
-
-    //     if (!$areColumnsEqual) {
-    //         return redirect()->back()->with(['error' => 'There is error in the column header']);
-    //     }
-    //     $temporaryPath = 'excel_chunks/' . $file->getClientOriginalName();
-    //     Storage::disk('local')->put($temporaryPath, file_get_contents($file));
-
-    //     ExcelQueue::dispatch($temporaryPath)->onQueue('imports');
-
-    //     return redirect()->back()->with(['success' => 'File is importing']);
-    // }
-
     public function Import(Request $request)
     {
+        set_time_limit(500);
+        ini_set('memory_limit', '50G');
         $request->validate([
             'excel_file' => 'required|mimes:csv,xls,xlsx'
         ]);
 
         $file = $request->file('excel_file');
+        $filePath = $file->getPathname();
 
-        $temporaryPath = 'ExcelFolder/' . $file->getClientOriginalName();
-        // dd($temporaryPath);
+        $spreadsheet = IOFactory::load($filePath);
+        $worksheet = $spreadsheet->getActiveSheet();
+
+        $rows = $worksheet->toArray();
+        $highestRow = $rows[0];
+        $sliceHighestRow = array_slice($rows, 1);
+        $collection = collect($highestRow);
+
+        $dataIndexNames = $collection->values()->toArray();
+        $dataIndexNamesString = implode(', ', $dataIndexNames);
+        // dd($dataIndexNamesString);
+
+        $databaseColumnNames = Schema::getColumnListing('catalogs');
+        array_shift($databaseColumnNames);
+        $indexNamesString = implode(', ', $databaseColumnNames);
+        // dd($indexNamesString);
+
+        $areColumnsEqual = ($dataIndexNamesString === $indexNamesString);
+        // dd($areColumnsEqual);
+
+        if (!$areColumnsEqual) {
+            return redirect()->back()->with(['error' => 'There is error in the column header']);
+        }
+        $temporaryPath = 'excel_chunks/' . $file->getClientOriginalName();
         Storage::disk('local')->put($temporaryPath, file_get_contents($file));
-        ExcelImportJob::dispatch($temporaryPath)->onQueue('imports');
+
+        ExcelQueue::dispatch($temporaryPath)->onQueue('imports');
 
         return redirect()->back()->with(['success' => 'File is importing']);
-
-        // ...
-
     }
+
+    // public function Import(Request $request)
+    // {
+    //     $request->validate([
+    //         'excel_file' => 'required|mimes:csv,xls,xlsx'
+    //     ]);
+
+    //     $file = $request->file('excel_file');
+
+    //     $temporaryPath = 'ExcelFolder/' . $file->getClientOriginalName();
+    //     // dd($temporaryPath);
+    //     Storage::disk('local')->put($temporaryPath, file_get_contents($file));
+    //     ExcelImportJob::dispatch($temporaryPath)->onQueue('imports');
+
+    //     return redirect()->back()->with(['success' => 'File is importing']);
+
+    //     // ...
+
+    // }
 
     public function export(Request $request)
     {

@@ -40,6 +40,9 @@ class ExcelQueue implements ShouldQueue
     public function handle()
     {
         ini_set('memory_limit', '50G');
+        ini_set('post_max_size', '1000G');
+        ini_set('upload_max_filesize', '1000G');
+
         $temporaryPath = $this->temporaryPath;
         $filePath = storage_path('app/' . $temporaryPath);
 
