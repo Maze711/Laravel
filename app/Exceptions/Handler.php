@@ -45,13 +45,8 @@ class Handler extends ExceptionHandler
     public function render($request, Throwable $exception)
     {
         if ($exception instanceof \Exception) {
-            Log::error($exception); // Log the exception if needed
-            return redirect()->back()->with('match', $exception->getMessage());
-        } elseif ($exception instanceof \ErrorException) {
-            Log::error($exception); // Log the exception if needed
             return redirect()->back()->with('error', $exception->getMessage());
         }
-    
         return parent::render($request, $exception);
     }
 }
