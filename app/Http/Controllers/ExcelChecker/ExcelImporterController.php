@@ -63,8 +63,6 @@ class ExcelImporterController extends Controller
     {
         set_time_limit(500);
         ini_set('memory_limit', '50G');
-        ini_set('post_max_size', '1000G');
-        ini_set('upload_max_filesize', '1000G');
         $request->validate([
             'excel_file' => 'required|mimes:csv,xls,xlsx'
         ]);

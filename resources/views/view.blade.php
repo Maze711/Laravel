@@ -71,44 +71,17 @@
                                     {{ session('success') }}
                                 </div>
                             @endif
-<<<<<<< HEAD
-
-                            <!-- Filter modal -->
-                            <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel"
-                                aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-=======
                             <!-- Filter modal -->
                             <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel"
                                 aria-hidden="true">
                                 <div class="modal-dialog ">
                                     <div class="modal-content" style="width: 200%; left: -50%;">
->>>>>>> ae6768f67cba149d3b720868ce4284460aa0e9e5
                                         <div class="modal-header">
                                             <h5 class="modal-title" id="filterModalLabel">Filter Catalog</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                 aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">
-<<<<<<< HEAD
-                                            <!-- Add your filter form or inputs here -->
-                                            <!-- Example: -->
-                                            <div class="mb-3">
-                                                <label for="filterName" class="form-label">Name</label>
-                                                <input type="text" class="form-control" id="filterName">
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="filterCategory" class="form-label">Category</label>
-                                                <input type="text" class="form-control" id="filterCategory">
-                                            </div>
-                                            <!-- Add more filter inputs as needed -->
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                data-bs-dismiss="modal">Close</button>
-                                            <button type="button" class="btn btn-primary">Apply Filter</button>
-=======
 
                                         </div>
                                         <div class="modal-footer">
@@ -116,7 +89,6 @@
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Close</button>
 
->>>>>>> ae6768f67cba149d3b720868ce4284460aa0e9e5
                                         </div>
                                     </div>
                                 </div>
