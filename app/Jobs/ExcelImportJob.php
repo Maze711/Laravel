@@ -10,117 +10,113 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-use Symfony\Component\Console\Output\ConsoleOutput;
-use Symfony\Component\Console\Helper\ProgressBar;
-
+use Illuminate\Support\Facades\Storage;
 
 class ExcelImportJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $filePath;
+    protected $temporaryPath;
 
     /**
      * Create a new job instance.
      *
+     * @param string $temporaryPath
      * @return void
      */
-    public function __construct($filePath)
+    public function __construct(string $temporaryPath)
     {
-        $this->filePath = $filePath;
+        $this->temporaryPath = $temporaryPath;
     }
+
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
     public function handle()
     {
-        $filePath = storage_path('app/ExcelFolder/' . $this->filePath);
+        // $temporaryPath = storage_path('app/ExcelFolder/catalog.xlsx');
+        // dd($temporaryPath);
         ini_set('memory_limit', '50G');
-        ini_set('post_max_size', '50G');
-        ini_set('upload_max_filesize', '50G');
-
-        try {
-            $reader = new Xlsx();
-
-            $spreadsheet = $reader->load($this->filePath);
-            $worksheet = $spreadsheet->getActiveSheet();
-            // Validate the column headers
-            if (!$this->validateColumnHeaders($worksheet)) {
-                throw new \Exception('There is an error in the column header.');
-            }
-        } catch (\Exception $e) {
-            $this->importAndDeleteFile($filePath);
+        if (!Storage::disk('local')->exists($this->temporaryPath)) {
+            return;
         }
-    }
-    protected function validateColumnHeaders(Worksheet $worksheet)
-    {
+        $filePath = storage_path('app/' . $this->temporaryPath);
+        $spreadsheet = IOFactory::load($filePath);
+
+        $worksheet = $spreadsheet->getActiveSheet();
+
         $rows = $worksheet->toArray();
-        $highestRow = $rows[0];
-        $sliceHighestRow = array_slice($rows, 1);
-        $collection = collect($highestRow);
-        $dataIndexNames = $collection->values()->toArray();
+        $headerRow = $rows[0];
+        $dataRows = array_slice($rows, 1);
 
         $databaseColumnNames = Schema::getColumnListing('catalogs');
         array_shift($databaseColumnNames);
-        $indexNamesString = implode(', ', $databaseColumnNames);
 
-        $dataIndexNamesString = implode(', ', $dataIndexNames);
+        $areColumnsEqual = $this->areColumnsEqual($headerRow, $databaseColumnNames);
 
-        return ($dataIndexNamesString === $indexNamesString);
+        if (!$areColumnsEqual) {
+            return;
+        }
+
+        $chunkSize = 1000;
+        $dataChunks = array_chunk($dataRows, $chunkSize);
+
+        // Move each data chunk to the excel_chunks directory
+        foreach ($dataChunks as $chunk) {
+            $this->moveChunkToDirectory($chunk);
+        }
+
+        // Cleanup: Delete the original file
+        Storage::disk('local')->delete($this->temporaryPath);
     }
 
-    private function importAndDeleteFile($filePath)
+    private function areColumnsEqual($headerRow, $databaseColumnNames)
+    {
+        $headerRow = array_map('strtolower', $headerRow);
+        $databaseColumnNames = array_map('strtolower', $databaseColumnNames);
+
+        // Check if the header row matches the database columns
+        return count(array_diff($headerRow, $databaseColumnNames)) === 0;
+    }
+
+    private function moveChunkToDirectory(array $chunk)
     {
         ini_set('memory_limit', '50G');
-        ini_set('post_max_size', '50G');
-        ini_set('upload_max_filesize', '50G');
+        // Generate a unique file name for the chunk
+        $chunkFileName = 'chunk_' . uniqid() . '.xlsx';
 
-        $filePath = storage_path('app/ExcelFolder/' . $filePath); // Update the file path
+        // Determine the new directory path for the chunk
+        $chunkDirectory = 'excel_chunks/';
 
-        $spreadsheet = IOFactory::load($filePath);
-        $worksheet = $spreadsheet->getActiveSheet();
-        $requiredColumns = ['brand'];
-
-        $rows = $worksheet->toArray();
-        $headerRow = array_shift($rows); // Remove the header row from the rows array
-
-        $progressOutput = new ConsoleOutput();
-        $progressBar = new ProgressBar($progressOutput, count($rows));
-        $progressBar->setFormat('debug');
-        $progressBar->start();
-
-        foreach ($rows as $row) {
-            $data = array_combine($headerRow, $row);
-            if ($this->validateRequiredColumns($data, $requiredColumns)) {
-                $primaryKey = ['brand' => $data['brand'], 'mspn' => $data['mspn']];
-                Catalog::updateOrCreate($primaryKey, $data);
-            }
-
-            $progressBar->advance();
-            Log::info('Progress: ' . $progressBar->getProgress());
+        // Create the directory if it doesn't exist
+        if (!Storage::disk('local')->exists($chunkDirectory)) {
+            Storage::disk('local')->makeDirectory($chunkDirectory);
         }
 
-        $progressBar->finish();
-        $progressOutput->writeln('');
+        // Create a new Excel file for the chunk
+        $chunkSpreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $chunkWorksheet = $chunkSpreadsheet->getActiveSheet();
 
-        unlink($filePath); // Delete the file after importing
+        // Add the header row
+        $headerRow = array_keys($chunk[0]);
+        $chunkWorksheet->fromArray([$headerRow], null, 'A1');
 
-        // throw new \Exception('Excel Imported Successfully');
-    }
+        // Add the data rows
+        $dataRows = array_map(function ($row) {
+            return array_values($row);
+        }, $chunk);
+        $chunkWorksheet->fromArray($dataRows, null, 'A2');
 
+        // Save the chunk file
+        $chunkFilePath = $chunkDirectory . $chunkFileName;
+        $writer = IOFactory::createWriter($chunkSpreadsheet, 'Xlsx');
+        $writer->save($chunkFilePath);
 
-    private function validateRequiredColumns($data, $requiredColumns)
-    {
-        foreach ($requiredColumns as $column) {
-            if (empty($data[$column])) {
-                return false;
-            }
-        }
-        return true;
+        return $chunkFilePath;
     }
 }

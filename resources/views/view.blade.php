@@ -7,7 +7,8 @@
             color: #fff;
             border: #6c757d;
             margin-top: 10px;
-
+            border-radius: 30px;
+            width: 190px;
         }
 
         .dt-button:hover {
@@ -97,7 +98,7 @@
                                 <div class="card-body">
                                     <div class="container mt-2">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <div class="h2 w-50">ADD CATALOG</div>
+                                            <div class="h2 w-50">STH CATALOG</div>
                                             <div class="input-group d-grid gap-4 d-md-flex justify-content-md-end">
                                                 <button id="filterButton" class="rounded-pill fs-6 btn btn-secondary"
                                                     type="button" style="width: 250px;">

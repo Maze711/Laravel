@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Jobs\ExcelImportJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -15,15 +16,24 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('queue:work --queue=imports')
-            ->everyMinute()
-            ->withoutOverlapping()
-            ->runInBackground();
+        // $schedule->command('queue:work --queue=imports')
+        //     ->everyMinute()
+        //     ->withoutOverlapping()
+        //     ->runInBackground();
 
-        $schedule->command('queue:work --queue=chunkFile')
-            ->everyMinute()
-            ->withoutOverlapping()
-            ->runInBackground();
+        $schedule->call(function () {
+            $filePath = storage_path('app/ExcelFolder/catalog.xlsx');
+
+            if (file_exists($filePath)) {
+                // Dispatch ExcelChunk job to chunk the file
+                ExcelImportJob::dispatch($filePath);
+            }
+        })->everyMinute();
+
+        // $schedule->command('queue:work --queue=chunkFile')
+        //     ->everyMinute()
+        //     ->withoutOverlapping()
+        //     ->runInBackground();
     }
 
     /**
