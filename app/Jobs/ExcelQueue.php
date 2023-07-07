@@ -40,9 +40,6 @@ class ExcelQueue implements ShouldQueue
     public function handle()
     {
         ini_set('memory_limit', '50G');
-        ini_set('post_max_size', '1000G');
-        ini_set('upload_max_filesize', '1000G');
-
         $temporaryPath = $this->temporaryPath;
         $filePath = storage_path('app/' . $temporaryPath);
 
@@ -58,15 +55,38 @@ class ExcelQueue implements ShouldQueue
         $progressBar->setFormat('debug');
         $progressBar->start();
 
-        foreach ($rows as $row) {
-            $data = array_combine($headerRow, $row);
-            if ($this->validateRequiredColumns($data, $requiredColumns)) {
-                $primaryKey = ['brand' => $data['brand'], 'mspn' => $data['mspn']];
-                Catalog::updateOrCreate($primaryKey, $data);
+        $chunkSize = 1000; // Set the desired chunk size
+        $chunks = array_chunk($rows, $chunkSize);
+
+        foreach ($chunks as $chunk) {
+            $rowsToInsert = [];
+            foreach ($chunk as $row) {
+                $data = array_combine($headerRow, $row);
+                if ($this->validateRequiredColumns($data, $requiredColumns)) {
+                    $primaryKey = ['brand' => $data['brand'], 'mspn' => $data['mspn']];
+
+                    $existingRow = Catalog::where($primaryKey)->first();
+                    if ($existingRow) {
+                        $hasUpdates = false;
+                        foreach ($data as $column => $value) {
+                            if ($existingRow->$column != $value) {
+                                $hasUpdates = true;
+                                break;
+                            }
+                        }
+                        if (!$hasUpdates) {
+                            continue; // Skip the row if no updated cells
+                        }
+                    }
+
+                    $rowsToInsert[] = $data;
+                }
+
+                $progressBar->advance();
+                Log::info('Progress: ' . $progressBar->getProgress());
             }
 
-            $progressBar->advance();
-            Log::info('Progress: ' . $progressBar->getProgress());
+            Catalog::upsert($rowsToInsert, ['brand', 'mspn']);
         }
 
         $progressBar->finish();

@@ -7,6 +7,7 @@ use App\Jobs\ExcelImportJob;
 use App\Jobs\ExcelQueue;
 use App\Models\Catalog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -14,7 +15,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Font;
-
+use Illuminate\Support\Facades\Redis;
 
 class ExcelImporterController extends Controller
 {
@@ -32,10 +33,19 @@ class ExcelImporterController extends Controller
             $databaseColumnNames = Schema::getColumnListing('catalogs');
 
             // Pass the pagination data along with the rows and column names
+            $totalRows = DB::table('catalogs')->count();
+
+            // Calculate the range of rows being shown
+            $startRow = ($page - 1) * $perPage + 1;
+            $endRow = min($page * $perPage, $totalRows);
+
             return view('view', [
                 'rows' => $rows,
                 'columns' => $databaseColumnNames,
-                'pagination' => $rows->links()->toHtml()
+                'pagination' => $rows->links()->toHtml(),
+                'totalRows' => $totalRows,
+                'startRow' => $startRow,
+                'endRow' => $endRow,
             ]);
         }
     }
@@ -163,4 +173,5 @@ class ExcelImporterController extends Controller
         // Download the spreadsheet
         return response()->download($filename)->deleteFileAfterSend(true);
     }
+
 }

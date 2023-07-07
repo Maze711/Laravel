@@ -147,8 +147,19 @@
                                                 @endforeach
                                             </tbody>
                                         </table>
+                                        <p>Showing rows {{ $startRow }} to {{ $endRow }} of {{ $totalRows }}
+                                        </p>
                                         <div id="paginationContainer">
                                             <ul class="pagination justify-content-md-end mt-3">
+                                                @if ($rows->currentPage() != 1)
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ $rows->url(1) }}"
+                                                            aria-label="First Page">
+                                                            <span aria-hidden="true">First Page</span>
+                                                        </a>
+                                                    </li>
+                                                @endif
+                                                
                                                 @if ($rows->currentPage() > 1)
                                                     <li class="page-item">
                                                         <a class="page-link" href="{{ $rows->previousPageUrl() }}"
@@ -157,7 +168,6 @@
                                                         </a>
                                                     </li>
                                                 @endif
-
                                                 @foreach ($rows->getUrlRange($rows->currentPage(), $rows->currentPage()) as $page => $url)
                                                     <li class="page-item active">
                                                         <span class="page-link">{{ $page }}</span>
@@ -169,6 +179,15 @@
                                                         <a class="page-link" href="{{ $rows->nextPageUrl() }}"
                                                             aria-label="Next">
                                                             <span aria-hidden="true">Next &raquo;</span>
+                                                        </a>
+                                                    </li>
+                                                @endif
+
+                                                @if ($rows->lastPage() > $rows->currentPage())
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ $rows->url($rows->lastPage()) }}"
+                                                            aria-label="Last Page">
+                                                            <span aria-hidden="true">Last Page</span>
                                                         </a>
                                                     </li>
                                                 @endif
