@@ -44,9 +44,12 @@ class Handler extends ExceptionHandler
 
     public function render($request, Throwable $exception)
     {
-        if ($exception instanceof \Exception) {
-            return redirect()->back()->with('error', $exception->getMessage());
+        if ($exception instanceof Exception && $exception->getMessage() === 'Column names do not match.') {
+            return response()->json([
+                'error' => $exception->getMessage(),
+            ], 500);
         }
+
         return parent::render($request, $exception);
     }
 }

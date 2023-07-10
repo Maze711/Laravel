@@ -7,8 +7,10 @@
             color: #fff;
             border: #6c757d;
             margin-top: 10px;
-            border-radius: 30px;
-            width: 190px;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            text-transform: uppercase;
         }
 
         .dt-button:hover {
@@ -28,10 +30,12 @@
             top: 40px !important;
             padding: 10px;
             left: 0 !important;
+
         }
 
         .dt-buttons {
             position: relative;
+
         }
 
         #catalogTable_wrapper .dt-button-background {
@@ -43,7 +47,7 @@
             background: #0d6efd;
             margin: 2px;
             font-size: 12px;
-            width: 12%;
+            width: 15%;
             color: #fff;
             border: 1px solid #0d6efd;
         }
@@ -52,6 +56,8 @@
             background: #95c0ff;
             border: 1px solid #579bff;
         }
+
+        
     </style>
     <div class="container-fluid">
         <div class="row">
@@ -99,16 +105,16 @@
                                     <div class="container mt-2">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div class="h2 w-50">STH CATALOG</div>
-                                            <div class="input-group d-grid gap-4 d-md-flex justify-content-md-end">
-                                                <button id="filterButton" class="rounded-pill fs-6 btn btn-secondary"
-                                                    type="button" style="width: 250px;">
+                                            <div class="input-group d-grid gap-2 d-md-flex justify-content-md-end">
+                                                <button id="filterButton" class="p-2 fs-6 btn btn-secondary"
+                                                    type="button" style="text-transform:uppercase">
                                                     <i class="fa-solid fa-filter"></i> FILTER
                                                 </button>
                                                 <form action="{{ route('catalog.export') }}" method="post">
                                                     @csrf
                                                     <input type="hidden" name="hidden_columns[]" id="hiddenColumnsInput">
-                                                    <button type="submit" class="rounded-pill p-2 fs-6 btn btn-secondary"
-                                                        style="width: 250px;"><i class="fa-solid fa-file-arrow-down"></i>
+                                                    <button type="submit" class="p-2 fs-6 btn btn-secondary"
+                                                        style="text-transform:uppercase"><i class="fa-solid fa-file-arrow-down"></i>
                                                         DOWNLOAD TEMPLATE</button>
                                                 </form>
                                                 <form method="POST" id="myForm" action="{{ route('import') }}"
@@ -117,8 +123,8 @@
                                                     <input id="file_input" style="display:none" type="file"
                                                         name="excel_file" accept=".csv,.xls,.xlsx">
                                                     <button type="button" onclick="selectFile()"
-                                                        class="rounded-pill p-2 fs-6 btn btn-secondary"
-                                                        style="width: 250px;"><i class="fa-solid fa-file-arrow-up"></i>
+                                                        class="p-2 fs-6 btn btn-secondary"
+                                                        style="text-transform:uppercase"><i class="fa-solid fa-file-arrow-up"></i>
                                                         UPLOAD A NEW FILE</button>
                                                 </form>
                                             </div>
@@ -138,7 +144,7 @@
                                             <tbody>
                                                 @foreach ($rows as $row)
                                                     <tr>
-                                                        @foreach ($row->toArray() as $value)
+                                                        @foreach ($row as $value)
                                                             <td class="text-truncate ellipsis py-3"
                                                                 style="max-width: 250px">
                                                                 {{ $value }}</td>
@@ -159,7 +165,7 @@
                                                         </a>
                                                     </li>
                                                 @endif
-                                                
+
                                                 @if ($rows->currentPage() > 1)
                                                     <li class="page-item">
                                                         <a class="page-link" href="{{ $rows->previousPageUrl() }}"
@@ -234,21 +240,9 @@
             var dataTable = $('#catalogTable').DataTable({
                 "dom": 'Bfrtip',
                 "buttons": [{
-                        "extend": 'copyHtml5',
-                        "exportOptions": {
-                            "columns": [0, ':visible']
-                        }
-                    },
-                    {
                         "extend": 'excelHtml5',
                         "exportOptions": {
                             "columns": ':visible'
-                        }
-                    },
-                    {
-                        "extend": 'pdfHtml5',
-                        "exportOptions": {
-                            "columns": [0, 1, 2, 5]
                         }
                     },
                     {
@@ -342,7 +336,6 @@
                         $('#catalogTable tbody').html(response.data);
 
                         $('#catalogTable_wrapper .pagination').html(response.pagination);
-
                     }
                 });
             }
