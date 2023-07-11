@@ -45,13 +45,13 @@ class ExcelImporterController extends Controller
             return view('view', [
                 'rows' => $rows,
                 'columns' => $databaseColumnNames,
-                'pagination' => $rows->links()->toHtml(),
                 'totalRows' => $totalRows,
                 'startRow' => $startRow,
                 'endRow' => $endRow,
             ]);
         }
     }
+
     public function Import(Request $request)
     {
         ini_set('memory_limit', '50G');

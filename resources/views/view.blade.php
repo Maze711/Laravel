@@ -56,8 +56,6 @@
             background: #95c0ff;
             border: 1px solid #579bff;
         }
-
-        
     </style>
     <div class="container-fluid">
         <div class="row">
@@ -106,15 +104,16 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div class="h2 w-50">STH CATALOG</div>
                                             <div class="input-group d-grid gap-2 d-md-flex justify-content-md-end">
-                                                <button id="filterButton" class="p-2 fs-6 btn btn-secondary"
-                                                    type="button" style="text-transform:uppercase">
+                                                <button id="filterButton" class="p-2 fs-6 btn btn-secondary" type="button"
+                                                    style="text-transform:uppercase">
                                                     <i class="fa-solid fa-filter"></i> FILTER
                                                 </button>
                                                 <form action="{{ route('catalog.export') }}" method="post">
                                                     @csrf
                                                     <input type="hidden" name="hidden_columns[]" id="hiddenColumnsInput">
                                                     <button type="submit" class="p-2 fs-6 btn btn-secondary"
-                                                        style="text-transform:uppercase"><i class="fa-solid fa-file-arrow-down"></i>
+                                                        style="text-transform:uppercase"><i
+                                                            class="fa-solid fa-file-arrow-down"></i>
                                                         DOWNLOAD TEMPLATE</button>
                                                 </form>
                                                 <form method="POST" id="myForm" action="{{ route('import') }}"
@@ -124,12 +123,14 @@
                                                         name="excel_file" accept=".csv,.xls,.xlsx">
                                                     <button type="button" onclick="selectFile()"
                                                         class="p-2 fs-6 btn btn-secondary"
-                                                        style="text-transform:uppercase"><i class="fa-solid fa-file-arrow-up"></i>
+                                                        style="text-transform:uppercase"><i
+                                                            class="fa-solid fa-file-arrow-up"></i>
                                                         UPLOAD A NEW FILE</button>
                                                 </form>
                                             </div>
                                         </div>
                                     </div>
+
                                     @if (isset($empty))
                                         <p class="text-center fs-3 mt-4">{{ $empty }}</p>
                                     @else
@@ -153,6 +154,19 @@
                                                 @endforeach
                                             </tbody>
                                         </table>
+
+                                        {{-- <div class="d-flex justify-content-end">
+                                            <div class="form-group">
+                                                <label for="rowsPerPage">Rows per page:</label>
+                                                <select class="form-control" id="rowsPerPage">
+                                                    <option value="10" selected>10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                            </div>
+                                        </div> --}}
+
                                         <p>Showing rows {{ $startRow }} to {{ $endRow }} of {{ $totalRows }}
                                         </p>
                                         <div id="paginationContainer">
@@ -219,13 +233,15 @@
         });
 
         $(document).ready(function() {
-            function fetchData(page) {
+            function fetchData(page, perPage) {
                 $.ajax({
-                    url: '/get-data/' + page,
+                    url: '/get-data/' + page + '?perPage=' + perPage,
                     type: 'GET',
                     success: function(response) {
                         // Update the data container with the received data
                         $('#catalogTable tbody').html(response.data);
+
+                        $('#catalogTable_wrapper .pagination').html(response.pagination);
                     }
                 });
             }
@@ -235,6 +251,7 @@
             });
 
             var importantColumns = [0, 1, 2]; // Define the indices of the important columns
+            var columnIndicesToRemove = [0];
             var searchFilters = {}; // Object to store search filters
 
             var dataTable = $('#catalogTable').DataTable({
@@ -265,24 +282,26 @@
                 ],
                 "scrollX": true,
                 "columnDefs": [{
-                    "targets": '_all',
-                    "orderable": true // Enable sorting for all columns
+                    "targets": [0], // Adjust the column index if needed
+                    "visible": false, // Hide the specified columns
+                    "searchable": false
                 }],
                 "paging": false, // Disable the built-in pagination
                 "info": false
             });
 
+
+            
             // Event listener for Filter button
             $('#filterButton').on('click', function() {
                 var modalContent = $('<div></div>');
-                var form = $('<form class="row g-4"></form>'); // Add class "row g-3" to the form
+                var form = $('<form class="row row-cols-2 row-cols-lg-5 g-2 g-lg-3"></form>'); // Add class "row g-3" to the form
 
                 dataTable.columns().every(function() {
                     var column = this;
                     var title = $(column.header()).text();
 
-                    var input = $('<input type="text" class="form-control" placeholder="Search ' +
-                            title + '" />')
+                    var input = $('<input type="text" class="form-control" />')
                         .on('click', function(e) {
                             e.stopPropagation(); // Prevent sorting when clicking on the input
                         })
@@ -324,21 +343,16 @@
             $('#catalogTable_wrapper .pagination').on('click', 'a', function(e) {
                 e.preventDefault();
                 var page = $(this).attr('href').split('page=')[1];
-                fetchData(page);
+                var perPage = $('#rowsPerPage').val();
+                fetchData(page, perPage);
             });
 
-            function fetchData(page) {
-                $.ajax({
-                    url: '/get-data/' + page,
-                    type: 'GET',
-                    success: function(response) {
-                        // Update the data container with the received data
-                        $('#catalogTable tbody').html(response.data);
-
-                        $('#catalogTable_wrapper .pagination').html(response.pagination);
-                    }
-                });
-            }
+            // Event listener for rows per page dropdown change
+            $('#rowsPerPage').on('change', function() {
+                var page = 1;
+                var perPage = $(this).val();
+                fetchData(page, perPage);
+            });
         });
     </script>
 
