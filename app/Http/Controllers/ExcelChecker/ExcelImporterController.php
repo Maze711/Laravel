@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\ExcelChecker;
 
 use App\Http\Controllers\Controller;
+use App\Imports\CatalogImport;
 use App\Jobs\ExcelImportJob;
 use App\Jobs\ExcelQueue;
 use App\Models\Catalog;
@@ -16,7 +17,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Font;
 use Illuminate\Support\Facades\Redis;
-
+use Illuminate\Support\HtmlString;
 use Maatwebsite\Excel\Facades\Excel;
 
 
@@ -24,7 +25,7 @@ class ExcelImporterController extends Controller
 {
     public function index(Request $request)
     {
-        $perPage = 10; // Number of rows per page
+        $perPage = 20; // Number of rows per page
         $page = $request->query('page', 1);
 
         // Fetch the data from the database using pagination
@@ -54,14 +55,20 @@ class ExcelImporterController extends Controller
 
     public function Import(Request $request)
     {
+        ini_set('max_execution_time', 500);
         ini_set('memory_limit', '50G');
         $request->validate([
             'excel_file' => 'required|mimes:csv,xls,xlsx'
         ]);
 
         $file = $request->file('excel_file');
-        $filePath = Excel::toArray([], $file)[0];
-        $headerRow = array_slice($filePath, 0, 1)[0];
+        $filePath = $file->getPathname();
+
+        $spreadsheet = IOFactory::load($filePath);
+        $worksheet = $spreadsheet->getActiveSheet();
+        $dataRows = $worksheet->toArray();
+
+        $headerRow = array_shift($dataRows);
         $collection = collect($headerRow);
         $dataIndexNames = $collection->values()->toArray();
         $dataIndexNamesString = implode(', ', $dataIndexNames);
@@ -73,11 +80,38 @@ class ExcelImporterController extends Controller
         $areColumnsEqual = ($dataIndexNamesString === $indexNamesString);
 
         if (!$areColumnsEqual) {
-            return redirect()->back()->with(['error' => 'There is error in the column header']);
+            return redirect()->back()->with(['error' => 'There is an error in the column header']);
         }
-        $temporaryPath = $file->store('excel_chunks');
 
-        ExcelQueue::dispatch($temporaryPath)->onQueue('imports');
+        foreach ($dataRows as $rowData) {
+            $data = array_combine($dataIndexNames, $rowData);
+            $primaryKey = [
+                'brand' => $data['brand'],
+                'mspn' => $data['mspn'],
+            ];
+
+            // dd($primaryKey);
+        
+            // Check if both brand and mspn values are not empty or null
+            if (!empty($primaryKey['brand']) && !empty($primaryKey['mspn'])) {
+                Catalog::updateOrCreate($primaryKey, $data);
+            }
+        }
+
+        $emptyCells = [];
+
+        foreach ($dataRows as $rowIndex => $rowData) {
+            foreach ($rowData as $cellIndex => $cellData) {
+                if (in_array($dataIndexNames[$cellIndex], ['category', 'brand', 'mspn']) && empty($cellData)) {
+                    $emptyCells[] = "In row " . ($rowIndex + 2) . " from " . $dataIndexNames[$cellIndex] . " is empty";
+                }
+            }
+        }
+
+        if (!empty($emptyCells)) {
+            $errorMessage = implode('<br>', $emptyCells);
+            return redirect()->back()->with(['error' => new HtmlString($errorMessage)]);
+        }
 
         return redirect()->back()->with(['success' => 'File is importing']);
     }

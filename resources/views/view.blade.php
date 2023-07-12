@@ -68,7 +68,7 @@
                                     {{ session('match') }}
                                 </div>
                             @elseif(session('error'))
-                                <div class="alert alert-danger">
+                                <div class="alert alert-danger text-center text-uppercase">
                                     {{ session('error') }}
                                 </div>
                             @elseif(session('success'))
@@ -86,14 +86,12 @@
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                 aria-label="Close"></button>
                                         </div>
-                                        <div class="modal-body">
-
-                                        </div>
+                                        <div class="modal-body"></div>
                                         <div class="modal-footer">
-
+                                            <button type="button" class="btn btn-primary apply-filter-btn">Apply
+                                                Filter</button>
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Close</button>
-
                                         </div>
                                     </div>
                                 </div>
@@ -287,72 +285,86 @@
                     "searchable": false
                 }],
                 "paging": false, // Disable the built-in pagination
-                "info": false
+                "info": false,
             });
 
-
-            
             // Event listener for Filter button
             $('#filterButton').on('click', function() {
                 var modalContent = $('<div></div>');
-                var form = $('<form class="row row-cols-2 row-cols-lg-5 g-2 g-lg-3"></form>'); // Add class "row g-3" to the form
+                var form = $(
+                '<form class="row row-cols-2 row-cols-lg-5 g-2 g-lg-3"></form>'); // Add class "row g-3" to the form
 
                 dataTable.columns().every(function() {
                     var column = this;
                     var title = $(column.header()).text();
 
-                    var input = $('<input type="text" class="form-control" />')
-                        .on('click', function(e) {
-                            e.stopPropagation(); // Prevent sorting when clicking on the input
-                        })
-                        .on('keyup change clear', function() {
-                            searchFilters[column.index()] = this
+                    // Skip hiding the ID column
+                    if (column.index() === 0) {
+                        return;
+                    }
+
+                    var input;
+                    if (title.toLowerCase().includes("created_at") || title.toLowerCase().includes(
+                            "updated_at")) {
+                        input = $('<input type="date" class="form-control" />')
+                            .on('click', function(e) {
+                                e
+                            .stopPropagation(); // Prevent sorting when clicking on the input
+                            })
+                            .on('change', function() {
+                                var selectedDate = new Date(this.value);
+                                if (!isNaN(selectedDate.getTime())) {
+                                    var year = selectedDate.getFullYear();
+                                    var month = String(selectedDate.getMonth() + 1).padStart(2,
+                                        "0");
+                                    var day = String(selectedDate.getDate()).padStart(2, "0");
+                                    searchFilters[column.index()] = year + "-" + month + "-" +
+                                        day; // Store the search filter value
+                                } else {
+                                    searchFilters[column.index()] =
+                                    ""; // Invalid date, clear the search filter value
+                                }
+                            });
+                    } else {
+                        input = $('<input type="text" class="form-control" />')
+                            .on('click', function(e) {
+                                e
+                            .stopPropagation(); // Prevent sorting when clicking on the input
+                            })
+                            .on('keyup change clear', function() {
+                                searchFilters[column.index()] = this
                                 .value; // Store the search filter value
-                        });
+                            });
+                    }
 
                     var label = $('<label for="filter_' + column.index() + '">' + title +
                         '</label>');
 
                     var formGroup = $(
-                            '<div class="col-md-4"></div>') // Set the width of the input column
+                        '<div class="col-md-4"></div>') // Set the width of the input column
                         .append(label, input);
 
                     form.append(formGroup);
                 });
 
-                var applyFilterButton = $(
-                        '<button type="button" class="btn btn-primary">Apply Filter</button>')
-                    .on('click', function() {
-                        for (var index in searchFilters) {
-                            var value = searchFilters[index];
-
-                            var column = dataTable.column(parseInt(index));
-                            column.search(value).draw();
-                        }
-
-                        $('#filterModal').modal('hide');
-                    });
-
-                form.append(applyFilterButton);
                 modalContent.append(form);
 
                 $('#filterModal .modal-body').empty().append(modalContent);
             });
 
-            // Event listener for pagination links
-            $('#catalogTable_wrapper .pagination').on('click', 'a', function(e) {
-                e.preventDefault();
-                var page = $(this).attr('href').split('page=')[1];
-                var perPage = $('#rowsPerPage').val();
-                fetchData(page, perPage);
+            // Event listener for Apply Filter button
+            $(document).on('click', '.apply-filter-btn', function() {
+                for (var index in searchFilters) {
+                    var value = searchFilters[index];
+
+                    var column = dataTable.column(parseInt(index));
+                    column.search(value, true, false)
+                .draw(); // Set the second parameter to true to perform regex search
+                }
+
+                $('#filterModal').modal('hide');
             });
 
-            // Event listener for rows per page dropdown change
-            $('#rowsPerPage').on('change', function() {
-                var page = 1;
-                var perPage = $(this).val();
-                fetchData(page, perPage);
-            });
         });
     </script>
 

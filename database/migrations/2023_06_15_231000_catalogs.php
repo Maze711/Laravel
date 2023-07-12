@@ -110,7 +110,6 @@ return new class extends Migration
             $table->integer('bolt_pattern_2')->default(0)->nullable();
             $table->string('bolt_circle_diameter_2', 100)->default('0')->nullable();
             $table->timestamps();
-            $table->unique(['brand', 'mspn']);
         });
     }
 

@@ -105,7 +105,5 @@ class Catalog extends Model
         'bolt_circle_diameter_1',
         'bolt_pattern_2',
         'bolt_circle_diameter_2',
-        'created_at',
-        'updated_at'
     ];
 }
