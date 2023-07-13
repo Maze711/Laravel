@@ -55,65 +55,79 @@ class ExcelImporterController extends Controller
 
     public function Import(Request $request)
     {
-        ini_set('max_execution_time', 500);
-        ini_set('memory_limit', '50G');
+
         $request->validate([
             'excel_file' => 'required|mimes:csv,xls,xlsx'
         ]);
-
+    
         $file = $request->file('excel_file');
-        $filePath = $file->getPathname();
+        $temporaryPath = 'excel_chunks/' . $file->getClientOriginalName();
+        Storage::disk('local')->put($temporaryPath, file_get_contents($file));
 
-        $spreadsheet = IOFactory::load($filePath);
-        $worksheet = $spreadsheet->getActiveSheet();
-        $dataRows = $worksheet->toArray();
+        ExcelQueue::dispatch($temporaryPath)->onQueue('imports');
+        sleep(10);
+    
+        return redirect()->back()->with(['success' => 'File import process has been initiated.']);
 
-        $headerRow = array_shift($dataRows);
-        $collection = collect($headerRow);
-        $dataIndexNames = $collection->values()->toArray();
-        $dataIndexNamesString = implode(', ', $dataIndexNames);
+        // ini_set('max_execution_time', 500);
+        // ini_set('memory_limit', '50G');
+        // $request->validate([
+        //     'excel_file' => 'required|mimes:csv,xls,xlsx'
+        // ]);
 
-        $dbHeaders = DB::getSchemaBuilder()->getColumnListing('catalogs');
-        array_shift($dbHeaders);
-        $indexNamesString = implode(', ', $dbHeaders);
+        // $file = $request->file('excel_file');
+        // $filePath = $file->getPathname();
 
-        $areColumnsEqual = ($dataIndexNamesString === $indexNamesString);
+        // $spreadsheet = IOFactory::load($filePath);
+        // $worksheet = $spreadsheet->getActiveSheet();
+        // $dataRows = $worksheet->toArray();
 
-        if (!$areColumnsEqual) {
-            return redirect()->back()->with(['error' => 'There is an error in the column header']);
-        }
+        // $headerRow = array_shift($dataRows);
+        // $collection = collect($headerRow);
+        // $dataIndexNames = $collection->values()->toArray();
+        // $dataIndexNamesString = implode(', ', $dataIndexNames);
 
-        foreach ($dataRows as $rowData) {
-            $data = array_combine($dataIndexNames, $rowData);
-            $primaryKey = [
-                'brand' => $data['brand'],
-                'mspn' => $data['mspn'],
-            ];
+        // $dbHeaders = DB::getSchemaBuilder()->getColumnListing('catalogs');
+        // array_shift($dbHeaders);
+        // $indexNamesString = implode(', ', $dbHeaders);
 
-            // dd($primaryKey);
+        // $areColumnsEqual = ($dataIndexNamesString === $indexNamesString);
+
+        // if (!$areColumnsEqual) {
+        //     return redirect()->back()->with(['error' => 'There is an error in the column header']);
+        // }
+
+        // foreach ($dataRows as $rowData) {
+        //     $data = array_combine($dataIndexNames, $rowData);
+        //     $primaryKey = [
+        //         'brand' => $data['brand'],
+        //         'mspn' => $data['mspn'],
+        //     ];
+
+        //     // dd($primaryKey);
         
-            // Check if both brand and mspn values are not empty or null
-            if (!empty($primaryKey['brand']) && !empty($primaryKey['mspn'])) {
-                Catalog::updateOrCreate($primaryKey, $data);
-            }
-        }
+        //     // Check if both brand and mspn values are not empty or null
+        //     if (!empty($primaryKey['brand']) && !empty($primaryKey['mspn'])) {
+        //         Catalog::updateOrCreate($primaryKey, $data);
+        //     }
+        // }
 
-        $emptyCells = [];
+        // $emptyCells = [];
 
-        foreach ($dataRows as $rowIndex => $rowData) {
-            foreach ($rowData as $cellIndex => $cellData) {
-                if (in_array($dataIndexNames[$cellIndex], ['category', 'brand', 'mspn']) && empty($cellData)) {
-                    $emptyCells[] = "In row " . ($rowIndex + 2) . " from " . $dataIndexNames[$cellIndex] . " is empty";
-                }
-            }
-        }
+        // foreach ($dataRows as $rowIndex => $rowData) {
+        //     foreach ($rowData as $cellIndex => $cellData) {
+        //         if (in_array($dataIndexNames[$cellIndex], ['category', 'brand', 'mspn']) && empty($cellData)) {
+        //             $emptyCells[] = "In row " . ($rowIndex + 2) . " from " . $dataIndexNames[$cellIndex] . " is empty";
+        //         }
+        //     }
+        // }
 
-        if (!empty($emptyCells)) {
-            $errorMessage = implode('<br>', $emptyCells);
-            return redirect()->back()->with(['error' => new HtmlString($errorMessage)]);
-        }
+        // if (!empty($emptyCells)) {
+        //     $errorMessage = implode('<br>', $emptyCells);
+        //     return redirect()->back()->with(['error' => new HtmlString($errorMessage)]);
+        // }
 
-        return redirect()->back()->with(['success' => 'File is importing']);
+        // return redirect()->back()->with(['success' => 'File is importing']);
     }
 
     // public function Import(Request $request)
