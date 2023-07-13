@@ -8,25 +8,29 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+
+
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\ConsoleOutput;
-use Illuminate\Support\Facades\Log;
 
 class ExcelQueue implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * The path of the batch chunks.
-     *
-     * @var array
-     */
     protected $temporaryPath;
 
+    /**
+     * Create a new job instance.
+     *
+     * @param string $temporaryPath
+     */
     public function __construct($temporaryPath)
     {
         $this->temporaryPath = $temporaryPath;
@@ -37,59 +41,101 @@ class ExcelQueue implements ShouldQueue
      *
      * @return void
      */
+
     public function handle()
     {
-        ini_set('memory_limit', '50G');
-        ini_set('post_max_size', '1000G');
-        ini_set('upload_max_filesize', '1000G');
-
         $temporaryPath = $this->temporaryPath;
-        $filePath = storage_path('app/' . $temporaryPath);
+        $temporaryPath = storage_path('app/' . $temporaryPath);
 
-        $spreadsheet = IOFactory::load($filePath);
+        $spreadsheet = IOFactory::load($temporaryPath);
         $worksheet = $spreadsheet->getActiveSheet();
-        $requiredColumns = ['brand'];
+        $dataRows = $worksheet->toArray();
 
-        $rows = $worksheet->toArray();
-        $headerRow = array_shift($rows); // Remove the header row from the rows array
+        $headerRow = array_shift($dataRows);
+        $collection = collect($headerRow);
+        $dataIndexNames = $collection->values()->toArray();
+        $dataIndexNamesString = implode(', ', $dataIndexNames);
 
-        $progressOutput = new ConsoleOutput();
-        $progressBar = new ProgressBar($progressOutput, count($rows));
-        $progressBar->setFormat('debug');
-        $progressBar->start();
+        $dbHeaders = DB::getSchemaBuilder()->getColumnListing('catalogs');
+        array_shift($dbHeaders);
+        $indexNamesString = implode(', ', $dbHeaders);
 
-        foreach ($rows as $row) {
-            $data = array_combine($headerRow, $row);
-            if ($this->validateRequiredColumns($data, $requiredColumns)) {
-                $primaryKey = ['brand' => $data['brand'], 'mspn' => $data['mspn']];
-                Catalog::updateOrCreate($primaryKey, $data);
-            }
+        $areColumnsEqual = ($dataIndexNamesString === $indexNamesString);
 
-            $progressBar->advance();
-            Log::info('Progress: ' . $progressBar->getProgress());
+        if (!$areColumnsEqual) {
+            $error = 'There is an error in the column header';
+            $this->markAsFailed($error);
+            return;
         }
 
-        $progressBar->finish();
-        $progressOutput->writeln('');
+        $emptyCells = [];
 
-        Storage::disk('local')->delete($temporaryPath);
-        // throw new \Exception('Excel Imported Successfully');
+        foreach ($dataRows as $rowIndex => $rowData) {
+            $data = array_combine($dataIndexNames, $rowData);
+            $primaryKey = [
+                'brand' => $data['brand'],
+                'mspn' => $data['mspn'],
+            ];
+
+            // Check if both brand and mspn values are not empty or null
+            if (!empty($primaryKey['brand']) && !empty($primaryKey['mspn'])) {
+                Log::info('Updating record with brand: ' . $primaryKey['brand'] . ', mspn: ' . $primaryKey['mspn']);
+                Log::info('Data: ' . json_encode($data));
+                Catalog::updateOrCreate($primaryKey, $data);
+            } else {
+                // Add to empty cells error array
+                foreach (['category', 'brand', 'mspn'] as $columnName) {
+                    if (empty($data[$columnName])) {
+                        $emptyCells[] = "In row " . ($rowIndex + 2) . " from " . $columnName . " is empty";
+                    }
+                }
+            }
+        }
+
+        if (!empty($emptyCells)) {
+            $errorMessage = implode('<br>', $emptyCells);
+            $this->markAsFailed($errorMessage);
+            return;
+        }
+    }
+
+
+    /**
+     * Handle a job failure.
+     *
+     * @param  \Throwable  $exception
+     * @return void
+     */
+    public function failed($exception)
+    {
+        // Log the failure, send notification, etc.
     }
 
     /**
-     * Validate the presence of required columns in the data.
+     * Mark the job as failed with the given error message.
      *
-     * @param  array  $data
-     * @param  array  $requiredColumns
-     * @return bool
+     * @param string $errorMessage
+     * @return void
      */
-    private function validateRequiredColumns($data, $requiredColumns)
+    protected function markAsFailed(string $errorMessage)
     {
-        foreach ($requiredColumns as $column) {
-            if (empty($data[$column])) {
-                return false;
-            }
-        }
-        return true;
+        // $response = new HtmlString($errorMessage);
+        Log::error('Import job failed: ' . $errorMessage);
+
+        // Store the response in cache or database for retrieval
+        // You can customize the storage mechanism based on your requirements
+        // Example: Cache::put('import_error', $response, 60);
+
+        // Log the failure, send notification, etc.
     }
+
+    // private function validateRequiredColumns($data, $requiredColumns)
+    // {
+    //     foreach ($requiredColumns as $column) {
+    //         if (empty($data[$column])) {
+    //             return false;
+    //         }
+    //     }
+    //     return true;
+    // }
 }

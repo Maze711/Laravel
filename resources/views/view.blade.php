@@ -7,8 +7,10 @@
             color: #fff;
             border: #6c757d;
             margin-top: 10px;
-            border-radius: 30px;
-            width: 190px;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            text-transform: uppercase;
         }
 
         .dt-button:hover {
@@ -28,10 +30,12 @@
             top: 40px !important;
             padding: 10px;
             left: 0 !important;
+
         }
 
         .dt-buttons {
             position: relative;
+
         }
 
         #catalogTable_wrapper .dt-button-background {
@@ -43,7 +47,7 @@
             background: #0d6efd;
             margin: 2px;
             font-size: 12px;
-            width: 12%;
+            width: 15%;
             color: #fff;
             border: 1px solid #0d6efd;
         }
@@ -64,7 +68,7 @@
                                     {{ session('match') }}
                                 </div>
                             @elseif(session('error'))
-                                <div class="alert alert-danger">
+                                <div class="alert alert-danger text-center text-uppercase">
                                     {{ session('error') }}
                                 </div>
                             @elseif(session('success'))
@@ -82,14 +86,12 @@
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                 aria-label="Close"></button>
                                         </div>
-                                        <div class="modal-body">
-
-                                        </div>
+                                        <div class="modal-body"></div>
                                         <div class="modal-footer">
-
+                                            <button type="button" class="btn btn-primary apply-filter-btn">Apply
+                                                Filter</button>
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Close</button>
-
                                         </div>
                                     </div>
                                 </div>
@@ -99,16 +101,17 @@
                                     <div class="container mt-2">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div class="h2 w-50">STH CATALOG</div>
-                                            <div class="input-group d-grid gap-4 d-md-flex justify-content-md-end">
-                                                <button id="filterButton" class="rounded-pill fs-6 btn btn-secondary"
-                                                    type="button" style="width: 250px;">
+                                            <div class="input-group d-grid gap-2 d-md-flex justify-content-md-end">
+                                                <button id="filterButton" class="p-2 fs-6 btn btn-secondary" type="button"
+                                                    style="text-transform:uppercase">
                                                     <i class="fa-solid fa-filter"></i> FILTER
                                                 </button>
                                                 <form action="{{ route('catalog.export') }}" method="post">
                                                     @csrf
                                                     <input type="hidden" name="hidden_columns[]" id="hiddenColumnsInput">
-                                                    <button type="submit" class="rounded-pill p-2 fs-6 btn btn-secondary"
-                                                        style="width: 250px;"><i class="fa-solid fa-file-arrow-down"></i>
+                                                    <button type="submit" class="p-2 fs-6 btn btn-secondary"
+                                                        style="text-transform:uppercase"><i
+                                                            class="fa-solid fa-file-arrow-down"></i>
                                                         DOWNLOAD TEMPLATE</button>
                                                 </form>
                                                 <form method="POST" id="myForm" action="{{ route('import') }}"
@@ -117,13 +120,15 @@
                                                     <input id="file_input" style="display:none" type="file"
                                                         name="excel_file" accept=".csv,.xls,.xlsx">
                                                     <button type="button" onclick="selectFile()"
-                                                        class="rounded-pill p-2 fs-6 btn btn-secondary"
-                                                        style="width: 250px;"><i class="fa-solid fa-file-arrow-up"></i>
+                                                        class="p-2 fs-6 btn btn-secondary"
+                                                        style="text-transform:uppercase"><i
+                                                            class="fa-solid fa-file-arrow-up"></i>
                                                         UPLOAD A NEW FILE</button>
                                                 </form>
                                             </div>
                                         </div>
                                     </div>
+
                                     @if (isset($empty))
                                         <p class="text-center fs-3 mt-4">{{ $empty }}</p>
                                     @else
@@ -138,7 +143,7 @@
                                             <tbody>
                                                 @foreach ($rows as $row)
                                                     <tr>
-                                                        @foreach ($row->toArray() as $value)
+                                                        @foreach ($row as $value)
                                                             <td class="text-truncate ellipsis py-3"
                                                                 style="max-width: 250px">
                                                                 {{ $value }}</td>
@@ -147,8 +152,32 @@
                                                 @endforeach
                                             </tbody>
                                         </table>
+
+                                        {{-- <div class="d-flex justify-content-end">
+                                            <div class="form-group">
+                                                <label for="rowsPerPage">Rows per page:</label>
+                                                <select class="form-control" id="rowsPerPage">
+                                                    <option value="10" selected>10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                            </div>
+                                        </div> --}}
+
+                                        <p>Showing rows {{ $startRow }} to {{ $endRow }} of {{ $totalRows }}
+                                        </p>
                                         <div id="paginationContainer">
                                             <ul class="pagination justify-content-md-end mt-3">
+                                                @if ($rows->currentPage() != 1)
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ $rows->url(1) }}"
+                                                            aria-label="First Page">
+                                                            <span aria-hidden="true">First Page</span>
+                                                        </a>
+                                                    </li>
+                                                @endif
+
                                                 @if ($rows->currentPage() > 1)
                                                     <li class="page-item">
                                                         <a class="page-link" href="{{ $rows->previousPageUrl() }}"
@@ -157,7 +186,6 @@
                                                         </a>
                                                     </li>
                                                 @endif
-
                                                 @foreach ($rows->getUrlRange($rows->currentPage(), $rows->currentPage()) as $page => $url)
                                                     <li class="page-item active">
                                                         <span class="page-link">{{ $page }}</span>
@@ -169,6 +197,15 @@
                                                         <a class="page-link" href="{{ $rows->nextPageUrl() }}"
                                                             aria-label="Next">
                                                             <span aria-hidden="true">Next &raquo;</span>
+                                                        </a>
+                                                    </li>
+                                                @endif
+
+                                                @if ($rows->lastPage() > $rows->currentPage())
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ $rows->url($rows->lastPage()) }}"
+                                                            aria-label="Last Page">
+                                                            <span aria-hidden="true">Last Page</span>
                                                         </a>
                                                     </li>
                                                 @endif
@@ -194,13 +231,15 @@
         });
 
         $(document).ready(function() {
-            function fetchData(page) {
+            function fetchData(page, perPage) {
                 $.ajax({
-                    url: '/get-data/' + page,
+                    url: '/get-data/' + page + '?perPage=' + perPage,
                     type: 'GET',
                     success: function(response) {
                         // Update the data container with the received data
                         $('#catalogTable tbody').html(response.data);
+
+                        $('#catalogTable_wrapper .pagination').html(response.pagination);
                     }
                 });
             }
@@ -210,26 +249,15 @@
             });
 
             var importantColumns = [0, 1, 2]; // Define the indices of the important columns
+            var columnIndicesToRemove = [0];
             var searchFilters = {}; // Object to store search filters
 
             var dataTable = $('#catalogTable').DataTable({
                 "dom": 'Bfrtip',
                 "buttons": [{
-                        "extend": 'copyHtml5',
-                        "exportOptions": {
-                            "columns": [0, ':visible']
-                        }
-                    },
-                    {
                         "extend": 'excelHtml5',
                         "exportOptions": {
                             "columns": ':visible'
-                        }
-                    },
-                    {
-                        "extend": 'pdfHtml5',
-                        "exportOptions": {
-                            "columns": [0, 1, 2, 5]
                         }
                     },
                     {
@@ -252,81 +280,91 @@
                 ],
                 "scrollX": true,
                 "columnDefs": [{
-                    "targets": '_all',
-                    "orderable": true // Enable sorting for all columns
+                    "targets": [0], // Adjust the column index if needed
+                    "visible": false, // Hide the specified columns
+                    "searchable": false
                 }],
                 "paging": false, // Disable the built-in pagination
-                "info": false
+                "info": false,
             });
 
             // Event listener for Filter button
             $('#filterButton').on('click', function() {
                 var modalContent = $('<div></div>');
-                var form = $('<form class="row g-4"></form>'); // Add class "row g-3" to the form
+                var form = $(
+                '<form class="row row-cols-2 row-cols-lg-5 g-2 g-lg-3"></form>'); // Add class "row g-3" to the form
 
                 dataTable.columns().every(function() {
                     var column = this;
                     var title = $(column.header()).text();
 
-                    var input = $('<input type="text" class="form-control" placeholder="Search ' +
-                            title + '" />')
-                        .on('click', function(e) {
-                            e.stopPropagation(); // Prevent sorting when clicking on the input
-                        })
-                        .on('keyup change clear', function() {
-                            searchFilters[column.index()] = this
+                    // Skip hiding the ID column
+                    if (column.index() === 0) {
+                        return;
+                    }
+
+                    var input;
+                    if (title.toLowerCase().includes("created_at") || title.toLowerCase().includes(
+                            "updated_at")) {
+                        input = $('<input type="date" class="form-control" />')
+                            .on('click', function(e) {
+                                e
+                            .stopPropagation(); // Prevent sorting when clicking on the input
+                            })
+                            .on('change', function() {
+                                var selectedDate = new Date(this.value);
+                                if (!isNaN(selectedDate.getTime())) {
+                                    var year = selectedDate.getFullYear();
+                                    var month = String(selectedDate.getMonth() + 1).padStart(2,
+                                        "0");
+                                    var day = String(selectedDate.getDate()).padStart(2, "0");
+                                    searchFilters[column.index()] = year + "-" + month + "-" +
+                                        day; // Store the search filter value
+                                } else {
+                                    searchFilters[column.index()] =
+                                    ""; // Invalid date, clear the search filter value
+                                }
+                            });
+                    } else {
+                        input = $('<input type="text" class="form-control" />')
+                            .on('click', function(e) {
+                                e
+                            .stopPropagation(); // Prevent sorting when clicking on the input
+                            })
+                            .on('keyup change clear', function() {
+                                searchFilters[column.index()] = this
                                 .value; // Store the search filter value
-                        });
+                            });
+                    }
 
                     var label = $('<label for="filter_' + column.index() + '">' + title +
                         '</label>');
 
                     var formGroup = $(
-                            '<div class="col-md-4"></div>') // Set the width of the input column
+                        '<div class="col-md-4"></div>') // Set the width of the input column
                         .append(label, input);
 
                     form.append(formGroup);
                 });
 
-                var applyFilterButton = $(
-                        '<button type="button" class="btn btn-primary">Apply Filter</button>')
-                    .on('click', function() {
-                        for (var index in searchFilters) {
-                            var value = searchFilters[index];
-
-                            var column = dataTable.column(parseInt(index));
-                            column.search(value).draw();
-                        }
-
-                        $('#filterModal').modal('hide');
-                    });
-
-                form.append(applyFilterButton);
                 modalContent.append(form);
 
                 $('#filterModal .modal-body').empty().append(modalContent);
             });
 
-            // Event listener for pagination links
-            $('#catalogTable_wrapper .pagination').on('click', 'a', function(e) {
-                e.preventDefault();
-                var page = $(this).attr('href').split('page=')[1];
-                fetchData(page);
+            // Event listener for Apply Filter button
+            $(document).on('click', '.apply-filter-btn', function() {
+                for (var index in searchFilters) {
+                    var value = searchFilters[index];
+
+                    var column = dataTable.column(parseInt(index));
+                    column.search(value, true, false)
+                .draw(); // Set the second parameter to true to perform regex search
+                }
+
+                $('#filterModal').modal('hide');
             });
 
-            function fetchData(page) {
-                $.ajax({
-                    url: '/get-data/' + page,
-                    type: 'GET',
-                    success: function(response) {
-                        // Update the data container with the received data
-                        $('#catalogTable tbody').html(response.data);
-
-                        $('#catalogTable_wrapper .pagination').html(response.pagination);
-
-                    }
-                });
-            }
         });
     </script>
 
