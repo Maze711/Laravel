@@ -19,21 +19,26 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\File;
+
 
 class ExcelQueue implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $temporaryPath;
-
+    protected $dbHeaders;
     /**
      * Create a new job instance.
      *
      * @param string $temporaryPath
      */
-    public function __construct($temporaryPath)
+    public function __construct($temporaryPath, $dbHeaders)
     {
         $this->temporaryPath = $temporaryPath;
+        $this->dbHeaders = $dbHeaders;
     }
 
     /**
@@ -44,6 +49,8 @@ class ExcelQueue implements ShouldQueue
 
     public function handle()
     {
+        ini_set('memory_limit', '50G');
+
         $temporaryPath = $this->temporaryPath;
         $temporaryPath = storage_path('app/' . $temporaryPath);
 
@@ -54,43 +61,33 @@ class ExcelQueue implements ShouldQueue
         $headerRow = array_shift($dataRows);
         $collection = collect($headerRow);
         $dataIndexNames = $collection->values()->toArray();
-        $dataIndexNamesString = implode(', ', $dataIndexNames);
-
-        $dbHeaders = DB::getSchemaBuilder()->getColumnListing('catalogs');
-        array_shift($dbHeaders);
-        $indexNamesString = implode(', ', $dbHeaders);
-
-        $areColumnsEqual = ($dataIndexNamesString === $indexNamesString);
-
-        if (!$areColumnsEqual) {
-            $error = 'There is an error in the column header';
-            $this->markAsFailed($error);
-            return;
-        }
-
         $emptyCells = [];
-
         foreach ($dataRows as $rowIndex => $rowData) {
             $data = array_combine($dataIndexNames, $rowData);
             $primaryKey = [
                 'brand' => $data['brand'],
                 'mspn' => $data['mspn'],
             ];
-
-            // Check if both brand and mspn values are not empty or null
             if (!empty($primaryKey['brand']) && !empty($primaryKey['mspn'])) {
-                Log::info('Updating record with brand: ' . $primaryKey['brand'] . ', mspn: ' . $primaryKey['mspn']);
-                Log::info('Data: ' . json_encode($data));
                 Catalog::updateOrCreate($primaryKey, $data);
             } else {
                 // Add to empty cells error array
+                $rowNumber = $rowIndex + 2;
+                $emptyCellErrors = [];
+
                 foreach (['category', 'brand', 'mspn'] as $columnName) {
                     if (empty($data[$columnName])) {
-                        $emptyCells[] = "In row " . ($rowIndex + 2) . " from " . $columnName . " is empty";
+                        $emptyCellErrors[] = "In row " . ($rowIndex + 2) . " from " . $columnName . " is empty";
                     }
+                }
+
+                if (!empty($emptyCellErrors)) {
+                    $emptyCells[] = implode(', ', $emptyCellErrors);
                 }
             }
         }
+
+        Storage::delete($temporaryPath);
 
         if (!empty($emptyCells)) {
             $errorMessage = implode('<br>', $emptyCells);
@@ -119,8 +116,9 @@ class ExcelQueue implements ShouldQueue
      */
     protected function markAsFailed(string $errorMessage)
     {
+        throw new \Exception('An error occurred during task processing.' . $errorMessage);
         // $response = new HtmlString($errorMessage);
-        Log::error('Import job failed: ' . $errorMessage);
+        // Log::error('Import job failed: ' . $errorMessage);
 
         // Store the response in cache or database for retrieval
         // You can customize the storage mechanism based on your requirements

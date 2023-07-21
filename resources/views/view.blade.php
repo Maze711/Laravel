@@ -6,11 +6,11 @@
             background-color: #6c757d;
             color: #fff;
             border: #6c757d;
-            margin-top: 10px;
             border: none;
-            padding: 5px 10px;
+            padding: .5rem !important;
             border-radius: 3px;
             text-transform: uppercase;
+            position: relative;
         }
 
         .dt-button:hover {
@@ -30,18 +30,12 @@
             top: 40px !important;
             padding: 10px;
             left: 0 !important;
-
-        }
-
-        .dt-buttons {
-            position: relative;
-
         }
 
         #catalogTable_wrapper .dt-button-background {
             display: none !important;
+            border: 1px black solid;
         }
-
 
         #catalogTable_wrapper .dt-button-collection .dt-button {
             background: #0d6efd;
@@ -61,7 +55,7 @@
         <div class="row">
             <div class="col-10">
                 <div class="container mt-4">
-                    <div class="row justify-content-center">
+                    <div class="row justify-content-center border border-dark">
                         <div class="col-md-12">
                             @if (session('match'))
                                 <div class="alert alert-success">
@@ -88,6 +82,9 @@
                                         </div>
                                         <div class="modal-body"></div>
                                         <div class="modal-footer">
+
+                                            <button type="button" class="btn btn-danger clear-filter-btn">Clear</button>
+
                                             <button type="button" class="btn btn-primary apply-filter-btn">Apply
                                                 Filter</button>
                                             <button type="button" class="btn btn-secondary"
@@ -96,124 +93,112 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="container mt-2">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="h2 w-50">STH CATALOG</div>
-                                            <div class="input-group d-grid gap-2 d-md-flex justify-content-md-end">
-                                                <button id="filterButton" class="p-2 fs-6 btn btn-secondary" type="button"
-                                                    style="text-transform:uppercase">
-                                                    <i class="fa-solid fa-filter"></i> FILTER
-                                                </button>
-                                                <form action="{{ route('catalog.export') }}" method="post">
-                                                    @csrf
-                                                    <input type="hidden" name="hidden_columns[]" id="hiddenColumnsInput">
-                                                    <button type="submit" class="p-2 fs-6 btn btn-secondary"
-                                                        style="text-transform:uppercase"><i
-                                                            class="fa-solid fa-file-arrow-down"></i>
-                                                        DOWNLOAD TEMPLATE</button>
-                                                </form>
-                                                <form method="POST" id="myForm" action="{{ route('import') }}"
-                                                    enctype="multipart/form-data">
-                                                    @csrf
-                                                    <input id="file_input" style="display:none" type="file"
-                                                        name="excel_file" accept=".csv,.xls,.xlsx">
-                                                    <button type="button" onclick="selectFile()"
-                                                        class="p-2 fs-6 btn btn-secondary"
-                                                        style="text-transform:uppercase"><i
-                                                            class="fa-solid fa-file-arrow-up"></i>
-                                                        UPLOAD A NEW FILE</button>
-                                                </form>
-                                            </div>
-                                        </div>
+                            <div class="container mt-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="h2 w-50">STH CATALOG</div>
+                                    <div class="input-group d-grid gap-2 d-md-flex justify-content-md-end">
+                                        <button id="filterButton" class="p-2 fs-6 btn btn-secondary" type="button"
+                                            style="text-transform:uppercase">
+                                            <i class="fa-solid fa-filter"></i> FILTER
+                                        </button>
+                                        <form action="{{ route('catalog.export') }}" method="post">
+                                            @csrf
+                                            <input type="hidden" name="hidden_columns[]" id="hiddenColumnsInput">
+                                            <button type="submit" class="p-2 fs-6 btn btn-secondary"
+                                                style="text-transform:uppercase"><i class="fa-solid fa-file-arrow-down"></i>
+                                                DOWNLOAD TEMPLATE</button>
+                                        </form>
+                                        <form method="POST" id="myForm" action="{{ route('import') }}"
+                                            enctype="multipart/form-data">
+                                            @csrf
+                                            <input id="file_input" style="display:none" type="file" name="excel_file"
+                                                accept=".csv,.xls,.xlsx">
+                                            <button type="button" onclick="selectFile()" class="p-2 fs-6 btn btn-secondary"
+                                                style="text-transform:uppercase"><i class="fa-solid fa-file-arrow-up"></i>
+                                                UPLOAD A NEW FILE</button>
+                                        </form>
                                     </div>
-
-                                    @if (isset($empty))
-                                        <p class="text-center fs-3 mt-4">{{ $empty }}</p>
-                                    @else
-                                        <table id="catalogTable" class="table table-bordered border-dark text-justify">
-                                            <thead>
-                                                <tr>
-                                                    @foreach ($columns as $column)
-                                                        <th>{{ $column }}</th>
-                                                    @endforeach
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach ($rows as $row)
-                                                    <tr>
-                                                        @foreach ($row as $value)
-                                                            <td class="text-truncate ellipsis py-3"
-                                                                style="max-width: 250px">
-                                                                {{ $value }}</td>
-                                                        @endforeach
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-
-                                        {{-- <div class="d-flex justify-content-end">
-                                            <div class="form-group">
-                                                <label for="rowsPerPage">Rows per page:</label>
-                                                <select class="form-control" id="rowsPerPage">
-                                                    <option value="10" selected>10</option>
-                                                    <option value="25">25</option>
-                                                    <option value="50">50</option>
-                                                    <option value="100">100</option>
-                                                </select>
-                                            </div>
-                                        </div> --}}
-
-                                        <p>Showing rows {{ $startRow }} to {{ $endRow }} of {{ $totalRows }}
-                                        </p>
-                                        <div id="paginationContainer">
-                                            <ul class="pagination justify-content-md-end mt-3">
-                                                @if ($rows->currentPage() != 1)
-                                                    <li class="page-item">
-                                                        <a class="page-link" href="{{ $rows->url(1) }}"
-                                                            aria-label="First Page">
-                                                            <span aria-hidden="true">First Page</span>
-                                                        </a>
-                                                    </li>
-                                                @endif
-
-                                                @if ($rows->currentPage() > 1)
-                                                    <li class="page-item">
-                                                        <a class="page-link" href="{{ $rows->previousPageUrl() }}"
-                                                            aria-label="Previous">
-                                                            <span aria-hidden="true">&laquo; Previous</span>
-                                                        </a>
-                                                    </li>
-                                                @endif
-                                                @foreach ($rows->getUrlRange($rows->currentPage(), $rows->currentPage()) as $page => $url)
-                                                    <li class="page-item active">
-                                                        <span class="page-link">{{ $page }}</span>
-                                                    </li>
-                                                @endforeach
-
-                                                @if ($rows->hasMorePages())
-                                                    <li class="page-item">
-                                                        <a class="page-link" href="{{ $rows->nextPageUrl() }}"
-                                                            aria-label="Next">
-                                                            <span aria-hidden="true">Next &raquo;</span>
-                                                        </a>
-                                                    </li>
-                                                @endif
-
-                                                @if ($rows->lastPage() > $rows->currentPage())
-                                                    <li class="page-item">
-                                                        <a class="page-link" href="{{ $rows->url($rows->lastPage()) }}"
-                                                            aria-label="Last Page">
-                                                            <span aria-hidden="true">Last Page</span>
-                                                        </a>
-                                                    </li>
-                                                @endif
-                                            </ul>
-                                        </div>
-                                    @endif
                                 </div>
                             </div>
+
+                            @if (isset($empty))
+                                <p class="text-center fs-3 mt-4">{{ $empty }}</p>
+                            @else
+                                <table id="catalogTable"
+                                    class="table datatable-header-orderlist dataTable no-footer text-justify">
+                                    <thead class="table-success">
+                                        <tr>
+                                            @foreach ($columns as $column)
+                                                <th>{{ $column }}</th>
+                                            @endforeach
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($rows as $row)
+                                            <tr>
+                                                @foreach ($row as $value)
+                                                    <td class="text-truncate ellipsis py-3"
+                                                        style="max-width: 250px; padding: 200px auto;">
+                                                        {{ $value }}</td>
+                                                @endforeach
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                <p>Showing rows {{ $startRow }} to {{ $endRow }} of
+                                    {{ $totalRows }}
+                                </p>
+                                <div id="paginationContainer">
+                                    <ul class="pagination justify-content-md-end mt-3">
+                                        @if ($rows->currentPage() != 1)
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ $rows->url(1) }}" aria-label="First Page">
+                                                    <span aria-hidden="true">First Page</span>
+                                                </a>
+                                            </li>
+                                        @endif
+
+                                        @if ($rows->currentPage() > 1)
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ $rows->previousPageUrl() }}"
+                                                    aria-label="Previous">
+                                                    <span aria-hidden="true">&laquo; Previous</span>
+                                                </a>
+                                            </li>
+                                        @endif
+
+                                        @php
+                                            $start = max(1, $rows->currentPage() - 4);
+                                            $end = min($start + 9, $rows->lastPage());
+                                        @endphp
+
+                                        @for ($page = $start; $page <= $end; $page++)
+                                            <li class="page-item{{ $page == $rows->currentPage() ? ' active' : '' }}">
+                                                <a class="page-link" href="{{ $rows->url($page) }}">
+                                                    {{ $page }}
+                                                </a>
+                                            </li>
+                                        @endfor
+
+                                        @if ($rows->hasMorePages())
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ $rows->nextPageUrl() }}" aria-label="Next">
+                                                    <span aria-hidden="true">Next &raquo;</span>
+                                                </a>
+                                            </li>
+                                        @endif
+
+                                        @if ($rows->lastPage() > $rows->currentPage())
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ $rows->url($rows->lastPage()) }}"
+                                                    aria-label="Last Page">
+                                                    <span aria-hidden="true">Last Page</span>
+                                                </a>
+                                            </li>
+                                        @endif
+                                    </ul>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -282,17 +267,30 @@
                 "columnDefs": [{
                     "targets": [0], // Adjust the column index if needed
                     "visible": false, // Hide the specified columns
-                    "searchable": false
+                    // "searchable": false
                 }],
                 "paging": false, // Disable the built-in pagination
                 "info": false,
+            });
+
+            // Event listener for Clear button
+            $(document).on('click', '.clear-filter-btn', function() {
+                // Clear searchFilters object
+                searchFilters = {};
+
+                // Clear filter inputs
+                $('.filter-input').val('');
+
+                // Redraw the table with cleared filters
+                dataTable.search('').columns().search('').draw();
             });
 
             // Event listener for Filter button
             $('#filterButton').on('click', function() {
                 var modalContent = $('<div></div>');
                 var form = $(
-                '<form class="row row-cols-2 row-cols-lg-5 g-2 g-lg-3"></form>'); // Add class "row g-3" to the form
+                    '<form class="row row-cols-2 row-cols-lg-5 g-2 g-lg-3"></form>'
+                ); // Add class "row g-3" to the form
 
                 dataTable.columns().every(function() {
                     var column = this;
@@ -306,10 +304,10 @@
                     var input;
                     if (title.toLowerCase().includes("created_at") || title.toLowerCase().includes(
                             "updated_at")) {
-                        input = $('<input type="date" class="form-control" />')
+                        input = $('<input type="date" class="form-control filter-input" />')
                             .on('click', function(e) {
                                 e
-                            .stopPropagation(); // Prevent sorting when clicking on the input
+                                    .stopPropagation(); // Prevent sorting when clicking on the input
                             })
                             .on('change', function() {
                                 var selectedDate = new Date(this.value);
@@ -322,18 +320,18 @@
                                         day; // Store the search filter value
                                 } else {
                                     searchFilters[column.index()] =
-                                    ""; // Invalid date, clear the search filter value
+                                        ""; // Invalid date, clear the search filter value
                                 }
                             });
                     } else {
-                        input = $('<input type="text" class="form-control" />')
+                        input = $('<input type="text" class="form-control filter-input" />')
                             .on('click', function(e) {
                                 e
-                            .stopPropagation(); // Prevent sorting when clicking on the input
+                                    .stopPropagation(); // Prevent sorting when clicking on the input
                             })
-                            .on('keyup change clear', function() {
-                                searchFilters[column.index()] = this
-                                .value; // Store the search filter value
+                            .on('keyup change', function() {
+                                searchFilters[column.index()] = this.value
+                                    .trim(); // Store the search filter value with trimmed white spaces
                             });
                     }
 
@@ -341,7 +339,7 @@
                         '</label>');
 
                     var formGroup = $(
-                        '<div class="col-md-4"></div>') // Set the width of the input column
+                            '<div class="col-md-4"></div>') // Set the width of the input column
                         .append(label, input);
 
                     form.append(formGroup);
@@ -359,13 +357,11 @@
 
                     var column = dataTable.column(parseInt(index));
                     column.search(value, true, false)
-                .draw(); // Set the second parameter to true to perform regex search
+                        .draw(); // Set the second parameter to true to perform regex search
                 }
 
                 $('#filterModal').modal('hide');
             });
-
         });
     </script>
-
 @endsection

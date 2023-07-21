@@ -19,6 +19,7 @@ use PhpOffice\PhpSpreadsheet\Style\Font;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\HtmlString;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Cache;
 
 
 class ExcelImporterController extends Controller
@@ -32,9 +33,17 @@ class ExcelImporterController extends Controller
         $rows = DB::table('catalogs')->paginate($perPage, ['*'], 'page', $page);
 
         if ($rows->isEmpty()) {
+            $page = 1;
             return view('view', ['empty' => 'The Database is empty.']);
         } else {
-            $databaseColumnNames = Schema::getColumnListing('catalogs');
+            $schemaManager = Schema::getConnection()->getDoctrineSchemaManager();
+            $tableDetails = $schemaManager->listTableDetails('catalogs');
+            $databaseColumnNames = $tableDetails->getColumns();
+
+            // Extract the column names from the column objects
+            $columnNames = array_map(function ($column) {
+                return $column->getName();
+            }, $databaseColumnNames);
 
             // Pass the pagination data along with the rows and column names
             $totalRows = DB::table('catalogs')->count();
@@ -45,7 +54,7 @@ class ExcelImporterController extends Controller
 
             return view('view', [
                 'rows' => $rows,
-                'columns' => $databaseColumnNames,
+                'columns' => $columnNames,
                 'totalRows' => $totalRows,
                 'startRow' => $startRow,
                 'endRow' => $endRow,
@@ -55,18 +64,36 @@ class ExcelImporterController extends Controller
 
     public function Import(Request $request)
     {
-
+        ini_set('memory_limit', '50G');
         $request->validate([
             'excel_file' => 'required|mimes:csv,xls,xlsx'
         ]);
-    
+
         $file = $request->file('excel_file');
+        $dbHeaders = DB::getSchemaBuilder()->getColumnListing('catalogs');
+        array_shift($dbHeaders);
+
+        $spreadsheet = IOFactory::load($file);
+        $worksheet = $spreadsheet->getActiveSheet();
+        $dataRows = $worksheet->toArray();
+
+        $headerRow = array_shift($dataRows);
+        $collection = collect($headerRow);
+        $dataIndexNames = $collection->values()->toArray();
+
+        $areColumnsEqual = empty(array_diff_assoc($dataIndexNames, $dbHeaders));
+
+        if (!$areColumnsEqual) {
+            $error = 'There is an error in the column header';
+            $fileName = 'text.txt';
+            Storage::put($fileName, $error);
+            return redirect()->back()->with(['error' => 'Error']);
+        } 
+
         $temporaryPath = 'excel_chunks/' . $file->getClientOriginalName();
         Storage::disk('local')->put($temporaryPath, file_get_contents($file));
 
-        ExcelQueue::dispatch($temporaryPath)->onQueue('imports');
-        sleep(10);
-    
+        ExcelQueue::dispatch($temporaryPath, $dbHeaders)->onQueue('imports');
         return redirect()->back()->with(['success' => 'File import process has been initiated.']);
 
         // ini_set('max_execution_time', 500);
@@ -105,7 +132,7 @@ class ExcelImporterController extends Controller
         //     ];
 
         //     // dd($primaryKey);
-        
+
         //     // Check if both brand and mspn values are not empty or null
         //     if (!empty($primaryKey['brand']) && !empty($primaryKey['mspn'])) {
         //         Catalog::updateOrCreate($primaryKey, $data);

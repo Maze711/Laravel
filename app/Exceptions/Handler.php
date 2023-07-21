@@ -42,14 +42,16 @@ class Handler extends ExceptionHandler
         });
     }
 
-    public function render($request, Throwable $exception)
+    public function report(Throwable $exception)
     {
-        if ($exception instanceof Exception && $exception->getMessage() === 'Column names do not match.') {
-            return response()->json([
-                'error' => $exception->getMessage(),
-            ], 500);
+        if ($exception instanceof \Exception) {
+            // Send error message via email, notification, etc.
+            $errorMessage = $exception->getMessage();
+        
+            // Send error message to the terminal
+            Log::info($errorMessage);
         }
 
-        return parent::render($request, $exception);
+        parent::report($exception);
     }
 }
